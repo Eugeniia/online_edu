@@ -1660,11 +1660,139 @@ co # 47
 
 ## Exploratory Data Analysis (Coursera)
 
-```{r Exploratory Data Analysis}
+```{r Exploratory Data Analysis, echo=FALSE}
 ## Week 1
 # L1 Graphs
 # Principles of Analytic Graphics
+setwd("/Users/foffa/Desktop/Learning/online_edu/coursera/data_science_specialisation_JHU/exploratory_data_analysis")
+pollution <- read.csv("./file.csv", colClasses = c("numeric", "character", "factor", "numeric"))
+head(pollution)
+fileURL <- "https://d396qusza40orc.cloudfront.net/getdata%2Fdata%2Fss06pid.csv"
+download.file(fileURL, destfile = "./w1/acs.csv", method = "curl")
+acs <- read.csv("./w1/acs.csv"); head(acs,3)
+# five-number summary
+summary(acs$pwgtp80)
+# boxplot
+boxplot(acs$pwgtp80, col = "blue")
+abline(h = 200, lwd = 2) # overlying features: 200 could be a standard number, smth you sompared with
+# histogram
+hist(acs$pwgtp80, col = "green", breaks = 100) # play around with the breaks
+rug(acs$pwgtp80) # add a Rug (all the points) to a plot
+abline(v = median(acs$pwgtp80), col = "magenta", lwd = 4) # v - for vertical line
+# barplot
+barplot(table(acs$PUMA), col = "wheat", main = "Number of observations in each PUMA")
+# multiple boxplots
+boxplot(acs$pwgtp80 ~ acs$PUMA, data = acs, col = "red")
+# multiple histograms
+par(mfrow=c(2,1), mar = c(4,4,2,1))
+hist(subset(acs, PUMA == 100)$pwgtp80, col = "green")
+hist(subset(acs, PUMA == 200)$pwgtp80, col = "green")
+# scatterplot
+with(acs, plot(CIT, pwgtp80, col = PUMA)) # add color
+abline(h = 200, lwd = 2, lty = 2)
+# multiple scatterplots
+par(mfrow=c(2,1), mar = c(4,4,2,1))
+with(subset(acs, PUMA == 100), plot(CIT, pwgtp80, main = "PUMA 100"))
+with(subset(acs, PUMA == 200), plot(CIT, pwgtp80, main = "PUMA 200"))
 
+# L2 Plotting
+# The base plotting system (the oldest one)
+library(datasets)
+data(cars)
+with(cars, plot(speed, dist))
+# The Lattice system
+library(lattice)
+state <- data.frame(state.x77, region = state.region)
+xyplot(Life.Exp ~ Income | region, data = state, layout = c(4,1))
+# The ggplot system
+library(ggplot2)
+data(mpg)
+qplot(displ, hwy, data = mpg)
+# The base plotting system
+library(datasets)
+hist(airquality$Ozone)
+with(airquality, plot(Wind, Ozone)); title(main = "Ozone and Wind in New York City")
+with(airquality, plot(Wind, Ozone, main = "Ozone and Wind in New York City"))
+with(subset(airquality, Month == 5), points(Wind, Ozone, col = "blue"))
+airquality <- transform(airquality, Month = factor(Month))
+boxplot(Ozone ~ Month, airquality, xlab = "Month", ylab = "Ozone (ppb)")
+par("lty"); par("col")
+par("mar") # 5.1 - bottom (first), 4.1 - left-hand side (second), 4.1 - top (third), 2.1 - right-hand side (fourth). Clock-wise direction. 5.1 means 5.1 lines of text
+# Base plot with annotation
+with(airquality, plot(Wind, Ozone, main = "Ozone and Wind in New York City", type = "n")) # set everything but to not plot anything
+with(subset(airquality, Month == 5), points(Wind, Ozone, col = "blue"))
+with(subset(airquality, Month != 5), points(Wind, Ozone, col = "red"))
+legend("topright", pch = 1, col = c("blue", "red"), legend = c("May", "Other months"))
+# Base plot with regression line
+with(airquality, plot(Wind, Ozone, main = "Ozone and Wind in New York City", pch = 20))
+model <- lm(Ozone ~ Wind, airquality)
+abline(model, lwd = 2)
+# Multiple base plots
+par(mfrow=c(1,2)) # one row, two columns
+with(airquality, {
+  plot(Wind, Ozone, main = "Ozone and Wind")
+  plot(Solar.R, Ozone, main = "Ozone and Solar Radiation")
+})
+# Multiple base plots
+par(mfrow=c(1,3), mar=c(4,4,2,1), oma=c(0,0,2,0))
+with(airquality, {
+  plot(Wind, Ozone, main = "Ozone and Wind")
+  plot(Solar.R, Ozone, main = "Ozone and Solar Radiation")
+  plot(Temp, Ozone, main = "Ozone and Temperature")
+  mtext("Ozone and Weather in New York City", outer = TRUE)
+})
+# Demo
+x <- rnorm(100)
+hist(x)
+y <- rnorm(100)
+plot(x, y)
+par(mar=c(2,2,2,2)); plot(x, y)
+par(mar=c(4,4,2,2)); plot(x, y)
+example(points) # check the pch type
+x <- rnorm(100); y <- rnorm(100)
+plot(x, y, pch=20)
+title("Scatterplot")
+text(-2,-2, "label")
+legend("topleft", legend = "Data", pch=20)
+z <- rpois(100,2)
+# Multiple base plots
+par(mfrow=c(2,1))
+plot(x, y, pch=20)
+plot(x, z, pch=19)
+# Example
+par(mfrow=c(1,1))
+x <- rnorm(100); y <- x + rnorm(100); g <- gl(2, 50, labels = c("Male", "Female"))
+plot(x, y, type = "n")
+points(x[g == "Male"], y[g == "Male"], col = "blue")
+points(x[g == "Female"], y[g == "Female"], col = "red")
+
+# L3 Graphics Devices - smth where you can make a plot appear: e.g. screen or file devices
+?Devices
+# vector formats
+?pdf(); ?svg(); ?win.metafile; ?postscript
+# bitmap formats
+?png(); ?jpeg(); ?tiff(); ?bmp()
+dev.cur() # the currently active graphics device can be found by calling
+dev.set() # to change the active graphics device
+# copying plots
+dev.copy() # to copy a plot from one device to another
+dev.copy2pdf() # copy to a pdf file
+# exmaple of copying from screen device to a png file device, a faster way!
+x <- rnorm(100); y <- rnorm(100); plot(x, y, pch=20)
+dev.copy(png, file = "test.png") # copy a plot to a png file, but the result may not be the identical to the original!
+dev.off() # to close the png device!
+
+# Week 1 Quiz
+# Q1 - Show comparisons
+# Q2 - They are typically made very quickly.
+# Q3 - Plots are created and annotated with separate functions
+# Q4 - A PNG file
+# Q5 - SVG
+# Q6 - Scatterplots with many many points
+# Q7 - lines()
+# Q8 - windows()
+# Q9 - the plotting symbol/character in the base graphics system
+# Q10 - Construct the plot on the screen device and then copy it to a PDF file with dev.copy2pdf()
 
 
 ```
