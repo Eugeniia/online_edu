@@ -1,0 +1,127 @@
+---
+title: "Exploratory Data Analysis (Course Project 1)"
+output:
+  html_document:
+    df_print: paged
+---
+
+The goal of this course project is to examine how household energy usage varies over a 2-day period in February, 2007. For this, we need to reconstruct four exploratory plots, all of which were constructed using the base plotting system.
+
+
+This project includes:
+
+1. R scripts downloading the data and making the plots (download.R, plot1.R, plot2.R, plot3.R, plot4.R)
+2. code book describing the data and any transformations performed to make the plots (CodeBook.Rmd)
+3. Four plots (plot1.png, plot2.png, plot3.png and plot4.png)
+4. README file explaining how all of the scripts work (README.md)
+
+All the analyses were performed using R version 4.0.2 (2020-06-22) and RStudio version 1.2.5033.
+
+# Description of the data
+
+For this project, we use the "Individual household electric power consumption Data Set" downloaded from the [UC Irvine Machine Learning Repository](http://archive.ics.uci.edu/ml/index.php), a popular repository for machine learning datasets. It represents the measurements of electric power consumption in one household with a one-minute sampling rate over a period of almost 4 years. Different electrical quantities and some sub-metering values are available, but in this project we focus on these nine variables:
+
+1. Date: Date in format dd/mm/yyyy
+2. Time: time in format hh:mm:ss
+3. Global_active_power: household global minute-averaged active power (in kilowatt)
+4. Global_reactive_power: household global minute-averaged reactive power (in kilowatt)
+5. Voltage: minute-averaged voltage (in volt)
+6. Global_intensity: household global minute-averaged current intensity (in ampere)
+7. Sub_metering_1: energy sub-metering No. 1 (in watt-hour of active energy). It corresponds to the
+kitchen, containing mainly a dishwasher, an oven and a microwave (hot plates are not electric but gas powered).
+8. Sub_metering_2: energy sub-metering No. 2 (in watt-hour of active energy). It corresponds to the laundry room, containing a washing-machine, a tumble-drier, a refrigerator and a light.
+9. Sub_metering_3: energy sub-metering No. 3 (in watt-hour of active energy). It corresponds to an electric water-heater and an air-conditioner.
+
+## Downloading the data
+
+First, create and clone github repository for your project. Then, set/get the working directory to your cloned github repo on your computer. Use the following lines of code to download the dataset and unzip it as "household_power_consumption.txt":
+
+```{r downloading, echo=FALSE}
+fileURL <- "https://d396qusza40orc.cloudfront.net/exdata%2Fdata%2Fhousehold_power_consumption.zip"
+temp <- tempfile(); download.file(fileURL,temp)
+file.copy(from = temp, to = paste0(getwd(),"/raw_data.zip")) # download zip file as raw_data.zip
+unlink(temp) # delete the temp file or use file.remove(temp)
+unzip("raw_data.zip") # unzip the raw_data.zip as "household_power_consumption.txt"
+```
+
+## Loading the data
+
+```{r loading, echo=FALSE}
+# The dataset has 2,075,259 rows and 9 variables
+data <- read.table("household_power_consumption.txt", sep=";", header=TRUE, na.strings=c("NA", " ", "?"))
+# Convert Date to Date class
+data$Date <- format(as.Date(data$Date, "%d/%m/%Y"))
+# Convert Time to Time class
+#library(lubridate); data$Time <- hms(data$Time)
+data$Time <- format(strptime(data$Time, "%H:%M:%S"),"%H:%M:%S")
+```
+
+## Subsetting data for dates dates 2007-02-01 and 2007-02-02
+
+```{r subbsetting, echo=FALSE}
+subdata <- subset(data, data$Date == "2007-02-01" | data$Date == "2007-02-02")
+subdata$DateTime <- as.POSIXct(paste(subdata$Date, subdata$Time))
+active_power <- as.numeric(subdata$Global_active_power)
+```
+
+## Making plots
+
+This chunk of code makes plot1.png (see plot1.R)
+
+```{r plot1, echo=FALSE}
+png(filename = "plot1.png", width = 480, height = 480, units = "px")
+par(bg=NA)
+hist(subdata$Global_active_power, col="red", xlab="Global Active Power (killowatts)",
+     main="Global Active Power")
+dev.off()
+```
+
+This chunk of code makes plot2.png (see plot2.R)
+
+```{r plot2, echo=FALSE}
+png(filename = "plot2.png", width = 480, height = 480, units = "px")
+par(bg=NA)
+plot(subdata$DateTime, active_power, type="l", xlab="", ylab="Global Active Power (kilowatts)")
+dev.off()
+```
+
+This chunk of code makes plot3.png (see plot3.R)
+
+```{r plot3, echo=FALSE}
+png(filename = "plot3.png", width = 480, height = 480, units = "px")
+par(bg=NA)
+plot(subdata$DateTime, subdata$Sub_metering_1, type = "l", xlab = "", ylab = "Energy sub metering")
+lines(subdata$DateTime, subdata$Sub_metering_2, type = "l", col = "red")
+lines(subdata$DateTime, subdata$Sub_metering_3, type = "l", col = "blue")
+legend("topright", c("Sub_metering_1", "Sub_metering_2", "Sub_metering_3"), 
+       lwd = 2.5, col = c("black", "red", "blue"))
+dev.off()
+
+# Or use points
+png(filename = "plot3.png", width = 480, height = 480, units = "px")
+par(bg=NA)
+plot(subdata$DateTime, subdata$Sub_metering_1, type = "l", xlab = "", ylab = "Energy sub metering")
+points(subdata$DateTime, subdata$Sub_metering_2, type = "l", col = "red")
+points(subdata$DateTime, subdata$Sub_metering_3, type = "l", col = "blue")
+legend("topright", c("Sub_metering_1", "Sub_metering_2", "Sub_metering_3"), 
+       lwd = 2.5, col = c("black", "red", "blue"))
+dev.off()
+```
+
+This chunk of code makes plot4.png (see plot4.R)
+
+```{r plot4, echo=FALSE}
+png(filename = "plot4.png", width = 480, height = 480, units = "px")
+par(mfrow = c(2,2), mar = c(4,4,2,1), bg=NA)
+plot(subdata$DateTime, subdata$Global_active_power, type = "l",
+     xlab = "", ylab = "Global Active Power")
+plot(subdata$DateTime, subdata$Voltage, type = "l", xlab = "datetime", ylab = "Voltage")
+plot(subdata$DateTime, subdata$Sub_metering_1, type = "l", xlab = "", ylab = "Energy sub metering")
+lines(subdata$DateTime, subdata$Sub_metering_2, type = "l", col = "red")
+lines(subdata$DateTime, subdata$Sub_metering_3, type = "l", col = "blue")
+legend("topright", c("Sub_metering_1", "Sub_metering_2", "Sub_metering_3"), 
+       lwd = 2.5, col = c("black", "red", "blue"))
+plot(subdata$DateTime, subdata$Global_reactive_power, type = "l", 
+     xlab = "datetime", ylab = "Global_reactive_power")
+dev.off()
+```
