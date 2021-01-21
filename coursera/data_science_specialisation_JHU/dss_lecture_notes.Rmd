@@ -1794,6 +1794,78 @@ dev.off() # to close the png device!
 # Q9 - the plotting symbol/character in the base graphics system
 # Q10 - Construct the plot on the screen device and then copy it to a PDF file with dev.copy2pdf()
 
+# Week 1 PA
+
+## Week 2
+# L1. Lattice Plotting System - all plotting/annotation is done at once with a single function call
+?xyplot() # scatterplots
+?bwplot() # box-and-whickers plot, boxplots
+?histogram() # histogram
+?stripplot() # a boxplot with actual points
+?dotplot() # plot dots on "violin strings"
+?splom() # scatterplot matrix, similar to pairs in base plotting system
+?levelplot(); ?contourplot() # fo rplotting "image" data
+# simple lattice plot
+library(lattice); library(datasets)
+xyplot(Ozone ~ Wind, data = airquality)
+# multidimentional panel
+airquality <- transform(airquality, Month = factor(Month))
+xyplot(Ozone ~ Wind | Month, data = airquality, layout = c(5,1)) # auto-printing
+# lattice behaviour
+p <- xyplot(Ozone ~ Wind, data = airquality)
+print(p)
+# panel functions
+set.seed(10)
+x <- rnorm(100); f <- rep(0:1, each=50); y <- x + f - f * x + rnorm(100, sd=0.5)
+f <- factor(f, labels=c("group 1", "group 2"))
+xyplot(y ~ x | f, layout = c(2,1)) # plot with two panels
+# custom panel function
+xyplot(y ~ x | f, panel = function(x, y, ...) {
+  panel.xyplot(x, y, ...) # first call the default panel function for xyplot
+  panel.abline(h = median(y), lty = 2) # add the horizontal line at the median
+})
+xyplot(y ~ x | f, panel = function(x, y, ...) {
+  panel.xyplot(x, y, ...) # first call the default panel function for xyplot
+  panel.lmline(x, y, col = 2) # overlay a simple linear regression line
+})
+
+# L2. ggplot2
+library(ggplot2); str(mpg)
+qplot(displ, hwy, data=mpg, color=drv)
+qplot(displ, hwy, data=mpg, geom=c("point", "smooth"))
+qplot(displ, data=mpg, geom="density")
+qplot(hwy, data=mpg, fill=drv) # histogram
+qplot(displ, hwy, data=mpg, facets=.~drv) # add facets (like panels) column-wise (~right)
+qplot(hwy, data=mpg, facets=drv~., binwidth=2) # add facets (like panels) row-wise (left~)
+qplot(displ, hwy, data=mpg, color=drv) + geom_smooth(method = "lm")
+?coord_cartesian(ylim=c(-3,3)) # to include but not show outliers
+?cut() # to categorize the continuous variable to a series of ranges so we can condition on them
+
+# Week 2 Quiz
+# Q1 - an object of class "trellis"
+# Q2 - A set of 3 panels showing the relationship between weight and time for each diet.
+library(nlme)
+library(lattice)
+xyplot(weight ~ Time | Diet, BodyWeight)
+# Q3 - lpoints()
+# Q4 - The object 'p' has not yet been printed with the appropriate print method.
+library(lattice)
+library(datasets)
+data(airquality)
+p <- xyplot(Ozone ~ Wind | factor(Month), data = airquality)
+# Q5 - trellis.par.set()
+# Q6 - the Grammar of Graphics developed by Leland Wilkinson
+# Q7 - 
+library(datasets); data(airquality)
+qplot(Wind, Ozone, data = airquality, facets = . ~ factor(Month))
+# Q8 - a plotting object like point, line, or other shape
+# Q9 - ggplot does not yet know what type of layer to add to the plot.
+library(ggplot2); library(ggplot2movies)
+g <- ggplot(movies, aes(votes, rating))
+print(g)
+# Q10 - qplot(votes, rating, data = movies) + geom_smooth()
+qplot(votes, rating, data = movies)
+
 
 ```
 
