@@ -1866,6 +1866,190 @@ print(g)
 # Q10 - qplot(votes, rating, data = movies) + geom_smooth()
 qplot(votes, rating, data = movies)
 
+## Week 3
+# L1. Hierarchical clustering
+set.seed(1234)
+par(mar = c(0,0,0,0))
+x <- rnorm(12, mean = rep(1:3, each=4), sd=0.2)
+y <- rnorm(12, mean = rep(c(1,2,1), each=4), sd=0.2)
+plot(x, y, col="blue", pch=19, cex=2)
+text(x + 0.05, y + 0.05, labels=as.character(1:12))
+df <- data.frame(x=x, y=y)
+# calculate the paitwise distances between the points
+distxy <- dist(df)
+hcldistxy <- hclust(distxy); plot(hcldistxy) # the next step is to cut the tree to get the number of clusters
+# prettier dendrograms
+myplclust <- function(hclust, lab=hclust$labels, lab.col=rep(1,length(hclust$labels)), hang=0.1,...){
+  y <- rep(hclust$height, 2)
+  x <- as.numeric(hclust$merge)
+  y <- y[which(x<0)]
+  x <- y[which(x<0)]
+  x <- abs(x)
+  y <- y[order(x)]
+  x <- x[order(x)]
+  plot(hclust, labels=FALSE, hang=hang, ...)
+  text(x=x, y=y[hclust$order]-(max(hclust$height)*hang), labels=lab[hclust$order],
+       col=lab.col[hclust$order], srt=90, adj=c(1, 0.5), xpd=NA, ...)
+}
+myplclust(hcldistxy, lab=rep(1:3, each=4), lab.col=rep(1:3,each=4))
+# how do you merge points together? by default "complete" method
+# heatmap
+df <- data.frame(x=x, y=y)
+set.seed(143)
+dm <- as.matrix(df)[sample(1:12),]
+heatmap(dm) # runs hclust on rows and columns of the table
+
+## L2. K-means clustering and dimension reduction
+# K-means clustering
+set.seed(1234)
+par(mar = c(0,0,0,0))
+x <- rnorm(12, mean = rep(1:3, each=4), sd=0.2)
+y <- rnorm(12, mean = rep(c(1,2,1), each=4), sd=0.2)
+plot(x, y, col="blue", pch=19, cex=2)
+text(x + 0.05, y + 0.05, labels=as.character(1:12))
+df <- data.frame(x=x, y=y)
+km <- kmeans(df, centers=3); names(km); km$cluster
+par(mar=rep(0.2,4))
+plot(x, y, col=km$cluster, pch=19, cex=2)
+points(km$centers, col=1:3, pch=3, cex=3, lwd=3)
+# heatmap
+set.seed(1234)
+dm <- as.matrix(df)[sample(1:12),]
+km2 <- kmeans(dm, centers=3)
+par(mfrow=c(1,2), mar=c(2,4,0.1,0.1))
+image(t(dm)[, nrow(dm):1], yaxt="n"); image(t(dm)[, order(km2$cluster)], yaxt="n")
+
+# Dimension reduction: PCA and singular value decomposition
+set.seed(12345)
+par(mar=rep(0.2,4))
+dm <- matrix(rnorm(400), nrow=40)
+image(1:10, 1:40, t(dm)[, nrow(dm):1])
+heatmap(dm)
+set.seed(678910) # what id we add a pattern?
+for(i in 1:40){
+  # flip a coin
+  cF <- rbinom(1, size=1, prob=0.5)
+  if (cF) {
+    dm[i,] <- dm[i,] + rep(c(0,3), each=5)
+  }
+}
+image(1:10, 1:40, t(dm)[, nrow(dm):1]); heatmap(dm)
+# patterns in rows and columns
+hh <- hclust(dist(dm))
+dmordered <- dm[hh$order,]
+par(mfrow=c(1,3))
+image(t(dmordered)[, nrow(dmordered):1])
+plot(rowMeans(dmordered), 40:1, xlab = "Row Mean", ylab = "Row", pch = 19)
+plot(colMeans(dmordered), xlab = "Column", ylab = "Column Mean", pch = 19)
+# SVD
+svd1 <- svd(scale(dmordered)) # list of three matrices u, d and v
+par(mfrow=c(1,3))
+image(t(dmordered)[, nrow(dmordered):1])
+plot(svd1$u[, 1], 40:1, xlab = "Row", ylab = "First left singular vector", pch = 19)
+plot(svd1$v[, 1], xlab = "Column", ylab = "First right singular vector", pch = 19)
+# variance explained
+par(mfrow=c(1,2))
+plot(svd1$d, xlab = "Column", ylab = "Singular value", pch = 19)
+plot(svd1$d^2/sum(svd1$d^2), xlab = "Column", ylab = "Prop. of variance explained", pch = 19)
+# relationship to principal components is close to svd
+svd1 <- svd(scale(dmordered))
+pca1 <- prcomp(dmordered, scale=T)
+plot(pca1$rotation[,1], svd1$v[,1], pch=19, xlab="Principal component 1", ylab="Right Singular Vector 1"); abline(c(0,1))
+# variance explained
+constantMatrix <- dmordered*0
+for(i in 1:dim(dmordered)[1]){
+  constantMatrix[i,] <- rep(c(0,1), each=5)
+}
+svd1 <- svd(constantMatrix)
+par(mfrow=c(1,3))
+image(t(constantMatrix)[, nrow(constantMatrix):1])
+plot(svd1$d, xlab = "Column", ylab = "Singular value", pch = 19)
+plot(svd1$d^2/sum(svd1$d^2), xlab = "Column", ylab = "Prop. of variance explained", pch = 19) # variance can be explained by a single component
+# add a second pattern to a dataset
+set.seed(678910)
+for(i in 1:40){
+  # flip a coin
+  cf1 <- rbinom(1, size=1, prob=0.5)
+  cf2 <- rbinom(1, size=1, prob=0.5)
+  if (cf1) {
+    dm[i,] <- dm[i,] + rep(c(0,5), each=5)
+  }
+  if (cf2) {
+    dm[i,] <- dm[i,] + rep(c(0,5), 5)
+  }
+}
+hh <- hclust(dist(dm))
+dmordered <- dm[hh$order,]
+svd2 <- svd(scale(dmordered))
+par(mfrow=c(1,3))
+image(t(dmordered)[, nrow(dmordered):1])
+# true patterns
+plot(rep(c(0,1), each=5), xlab = "Column", ylab = "Pattern 1", pch = 19)
+plot(rep(c(0,1), 5), xlab = "Column", ylab = "Pattern 2", pch = 19)
+# v and patterns in svd2
+svd2 <- svd(scale(dmordered))
+par(mfrow=c(1,3))
+image(t(dmordered)[, nrow(dmordered):1])
+plot(svd2$v[,1], xlab = "Column", ylab = "First right singular vector", pch = 19)
+plot(svd2$v[,2], xlab = "Column", ylab = "Second right singular vector", pch = 19)
+# d and variance explained
+svd2 <- svd(scale(dmordered))
+par(mfrow=c(1,2))
+plot(svd2$d, xlab = "Column", ylab = "Singular", pch = 19)
+plot(svd2$d^2/sum(svd2$d^2), xlab = "Column", ylab = "Percent of variance explained", pch = 19)
+
+# Dealing with missing values
+# Imputing
+library(BiocManager); BiocManager::install("impute"); library(impute)
+dm2 <- dmordered
+dm2[sample(1:100, size=40, replace=FALSE)] <- NA
+dm2 <- impute.knn(dm2)$data
+svd1 <- svd(scale(dmordered)); svd2 <- svd(scale(dm2))
+par(mfrow=c(1,2))
+plot(svd1$v[,1],pch=19); plot(svd2$v[,1],pch=19) # very similar
+
+# face exmaple
+load("data/face.rda"); image(t(faceData)[, nrow(faceData):1])
+# variance explained
+svd1 <- svd(scale(faceData)); plot(svd1$d^2/sum(svd1$d^2), xlab = "Singular vector", ylab = "Percent of variance explained", pch = 19)
+# create approximations that use fewer variables
+svd1 <- svd(scale(faceData))
+approx1 <- svd1$u[,1] %*% t(svd1$v[,1]) %*% svd1$d[1] # use the first singular vector
+approx5 <- svd1$u[,1:5] %*% t(svd1$v[,1:5]) %*% diag(svd1$d[1:5]) # use first five singular vectors; make diagonal matrix of d
+approx10 <- svd1$u[,1:10] %*% t(svd1$v[,1:10]) %*% diag(svd1$d[1:10]) # use first 10 singular vectors; make diagonal matrix of d
+# plot approximations
+par(mfrow=c(1,4))
+image(t(approx1)[, nrow(approx1):1], main="(a)")
+image(t(approx5)[, nrow(approx5):1], main="(b)")
+image(t(approx10)[, nrow(approx10):1], main="(c)")
+image(t(faceData)[, nrow(faceData):1], main="(d)") # original data
+
+# L3 Working with color
+?grDevices; library(help = "grDevices")
+?colorRamp(); ?colorRampPalette
+?colors()
+pal <- colorRamp(c("red", "blue")) # returns a function called pal
+pal(0) # RGB in columns: red (1st column), green (second column), blue (third column); get red color
+pal(1) # blue
+pal(0.5) # pink
+pal(seq(0,1,len=10)) # get sequence of colors between red and blue
+
+pal <- colorRampPalette(c("red", "yellow")) # returns a function called pal
+pal(2) # returns two colors in HEX format
+pal(10) # returns ten colors in HEX format
+
+library(help = "RColorBrewer"); library(RColorBrewer)
+cols <- brewer.pal(3, "BuGn"); cols # returns three colors from the BuGn palette
+pal <- colorRampPalette(cols)
+image(volcano, col=pal(20))
+
+x <- rnorm(10000); y <- rnorm(10000)
+smoothScatter(x,y) # useful when you need to plot lots of points! It create a 2D histogram; high density areas (with lots of points) - darker
+
+library(help = "colorspace") # for different control over colors
+
+## Week 4
+
 
 ```
 
