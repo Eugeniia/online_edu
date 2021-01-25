@@ -2048,10 +2048,219 @@ smoothScatter(x,y) # useful when you need to plot lots of points! It create a 2D
 
 library(help = "colorspace") # for different control over colors
 
-## Week 4
+?make.names()
+
+## Week 4 - PA
+# Downloading
+#setwd("/Users/foffa/Desktop/Learning/online_edu/coursera/data_science_specialisation_JHU/exploratory_data_analysis/w4_pa")
+fileURL <- "https://d396qusza40orc.cloudfront.net/exdata%2Fdata%2FNEI_data.zip"
+temp <- tempfile(); download.file(fileURL,temp)
+file.copy(from = temp, to = paste0(getwd(),"/raw_data.zip")) # download zip file as raw_data.zip
+unlink(temp) # delete the temp file or use file.remove(temp)
+unzip("raw_data.zip") # unzip the raw_data.zip
+# Reading PM2.5 Emissions Data (NEI) and Source Classification Code Table (SCC)
+NEI <- readRDS("summarySCC_PM25.rds")
+SCC <- readRDS("Source_Classification_Code.rds")
+
+# The overall goal of this assignment is to explore the National Emissions Inventory database and see what it say about fine particulate matter pollution in the United states over the 10-year period 1999–2008.
+
+# Plot 1
+# Q1: Have total emissions from PM2.5 decreased in the United States from 1999 to 2008? Using the base plotting system, make a plot showing the total PM2.5 emission from all sources for each of the years 1999, 2002, 2005, and 2008.
+#head(NEI)
+library(dplyr)
+options(width = 105, scipen = 7)
+q1 <- tapply(NEI$Emissions, NEI$year, sum) # get total emissions from 199 to 2008
+df1 <- as.data.frame(q1); colnames(df1) <- "total_emissions"
+#df1$year <- rownames(df1); df1 <- select(df1, year, total_emissions); df1
+#df1$year <- factor(rownames(df1)); df1 <- select(df1, year, total_emissions); df1
+#df1$year <- as.Date(df1$year, "%Y")
+df1 <- df1[1:4, "total_emissions"]
+
+png(filename = "plot1.png", width = 7, height = 6, units = "in", res = 300)
+par(mfrow=c(1,1))
+barplot(df1, names.arg = c("1999", "2002", "2005", "2008"),
+        main = "Total emissions from PM2.5 in the USA from 1999 to 2008",
+        xlab = "Year", ylab = "Total PM2.5 emissions, in tons")
+dev.off()
+
+# Plot 2
+# Q2: Have total emissions from PM2.5 decreased in the Baltimore City, Maryland (fips == "24510") from 1999 to 2008? Use the base plotting system to make a plot answering this question.
+options(width = 105, scipen = 7)
+balt.df <- NEI[NEI$fips=="24510",] # get emissions for Baltimore City, Maryland (fips == "24510")
+q2 <- tapply(balt.df$Emissions, balt.df$year, sum) # get total emissions from 1999 to 2008
+df2 <- as.data.frame(q2); colnames(df2) <- "total_emissions"
+df2 <- df2[1:4, "total_emissions"]
+#df2$year <- rownames(df2); df2 <- select(df2, year, total_emissions)
+
+png(filename = "plot2.png", width = 7, height = 6, units = "in", res = 300)
+par(mfrow=c(1,1))
+barplot(df2, names.arg = c("1999", "2002", "2005", "2008"),
+        main = "Total emissions from PM2.5 in the Baltimore City from 1999 to 2008",
+        xlab = "Year", ylab = "Total PM2.5 emissions, in tons")
+dev.off()
+
+# Plot 3
+# Q3: Of the four types of sources indicated by the type (point, nonpoint, onroad, nonroad) variable, which of these four sources have seen decreases in emissions from 1999–2008 for Baltimore City? Which have seen increases in emissions from 1999–2008? Use the ggplot2 plotting system to make a plot answer this question.
+library(plyr); library(ggplot2); library(reshape2)
+options(width = 105, scipen = 7)
+#unique(NEI$type)
+point.df <- NEI[NEI$type=="POINT",]; point.df <- tapply(point.df$Emissions, point.df$year, sum)
+nonpoint.df <- NEI[NEI$type=="NONPOINT",]; nonpoint.df <- tapply(nonpoint.df$Emissions, nonpoint.df$year, sum)
+onroad.df <- NEI[NEI$type=="ON-ROAD",]; onroad.df <- tapply(onroad.df$Emissions, onroad.df$year, sum)
+nonroad.df <- NEI[NEI$type=="NON-ROAD",]; nonroad.df <- tapply(nonroad.df$Emissions, nonroad.df$year, sum)
+
+point.df <- as.data.frame(point.df); colnames(point.df) <- "point"
+nonpoint.df <- as.data.frame(nonpoint.df); colnames(nonpoint.df) <- "nonpoint"
+onroad.df <- as.data.frame(onroad.df); colnames(onroad.df) <- "onroad"
+nonroad.df <- as.data.frame(nonroad.df); colnames(nonroad.df) <- "nonroad"
+point.df$year <- rownames(point.df); point.df <- select(point.df, year, point); point.df
+nonpoint.df$year <- rownames(nonpoint.df); nonpoint.df <- select(nonpoint.df, year, nonpoint); nonpoint.df
+onroad.df$year <- rownames(onroad.df); onroad.df <- select(onroad.df, year, onroad); onroad.df
+nonroad.df$year <- rownames(nonroad.df); nonroad.df <- select(nonroad.df, year, nonroad); nonroad.df
+
+df_list <- list(point.df, nonpoint.df, onroad.df, nonroad.df)
+df3 <- join_all(df_list)
+test <- melt(df3, id=c("year"), measure.vars = c("point", "nonpoint", "onroad", "nonroad"))
+
+png(filename = "plot3.png", width = 10, height = 6, units = "in", res = 300)
+ggplot(data=test, aes(x=year, y=value, fill=variable)) + 
+  geom_bar(position="dodge", stat="identity") +
+  theme_classic() +
+  scale_fill_brewer(name = "Four sources:", palette="Dark2") +
+  labs(title = "Total emissions from PM2.5 from four sources from 1999–2008 for Baltimore City") +
+  ylab("Total PM2.5 emissions, in tons") + xlab("Year")
+dev.off()
+
+
+# Plot 4
+# Q4: Across the United States, how have emissions from coal combustion-related sources changed from 1999–2008?
+library(plyr); library(ggplot2); library(reshape2)
+options(width = 105, scipen = 7)
+emm_sources <- unique(SCC$EI.Sector) # get all the sources
+coal_sources <- emm_sources[grep("[Cc]oal", emm_sources)] # get coal combustion-related sources
+scc_coal <- SCC[SCC$EI.Sector %in% coal_sources,]
+scc_coal_codes <- unique(scc_coal$SCC) # get coal SCC codes
+q4 <- NEI[NEI$SCC %in% scc_coal_codes,]
+df4 <- tapply(q4$Emissions, q4$year, sum)
+df4 <- as.data.frame(df4); colnames(df4) <- "total_emissions"
+df4$year <- rownames(df4); df4 <- select(df4, year, total_emissions); df4
+
+png(filename = "plot4.png", width = 8, height = 6, units = "in", res = 300)
+ggplot(df4, aes(x=year, y=total_emissions)) + 
+  geom_bar(stat="identity") +
+  theme_classic() +
+  labs(title = "Total emissions from PM2.5 from coal combustion-related sources from 1999–2008") +
+  ylab("Total PM2.5 emissions, in tons") + xlab("Year")
+dev.off()
+
+# Plot 5
+# Q5: How have emissions from motor vehicle sources changed from 1999–2008 in Baltimore City?
+library(plyr); library(ggplot2); library(reshape2)
+options(width = 105, scipen = 7)
+emm_sources <- unique(SCC$EI.Sector) # get all the sources
+veh_sources <- emm_sources[grep("[Vv]ehicles", emm_sources)] # get motor vehicle sources
+scc_veh <- SCC[SCC$EI.Sector %in% veh_sources,]
+scc_veh_codes <- unique(scc_veh$SCC) # get motor vehicle SCC codes
+q5 <- NEI[(NEI$SCC %in% scc_veh_codes) & (NEI$fips == "24510"),] # get motor vehicle emissions for Baltimore City, Maryland (fips == "24510")
+df5 <- tapply(q5$Emissions, q5$year, sum)
+df5 <- as.data.frame(df5); colnames(df5) <- "total_emissions"
+df5$year <- rownames(df5); df5 <- select(df5, year, total_emissions); df5
+
+png(filename = "plot5.png", width = 8, height = 6, units = "in", res = 300)
+ggplot(df5, aes(x=year, y=total_emissions)) + 
+  geom_bar(stat="identity") +
+  theme_classic() +
+  labs(title = "Total motor vehicle emissions from PM2.5 for Baltimore City from 1999–2008") +
+  ylab("Total PM2.5 emissions, in tons") + xlab("Year")
+dev.off()
+
+# Plot 6
+# Q6: Compare emissions from motor vehicle sources in Baltimore City with emissions from motor vehicle sources in Los Angeles County, California (fips == "06037". Which city has seen greater changes over time in motor vehicle emissions?
+library(plyr); library(ggplot2); library(reshape2)
+options(width = 105, scipen = 7)
+emm_sources <- unique(SCC$EI.Sector) # get all the sources
+veh_sources <- emm_sources[grep("[Vv]ehicles", emm_sources)] # get motor vehicle sources
+scc_veh <- SCC[SCC$EI.Sector %in% veh_sources,]
+scc_veh_codes <- unique(scc_veh$SCC) # get motor vehicle SCC codes
+#q6 <- NEI[(NEI$SCC %in% scc_veh_codes) & (NEI$fips == "24510" | NEI$fips == "06037"),] # get motor vehicle emissions for Baltimore City and Los Angeles
+q6_balt <- NEI[(NEI$SCC %in% scc_veh_codes) & (NEI$fips == "24510"),] # get motor vehicle emissions for Baltimore City
+q6_la <- NEI[(NEI$SCC %in% scc_veh_codes) & (NEI$fips == "06037"),] # get motor vehicle emissions for Los Angeles
+df6_balt <- tapply(q6_balt$Emissions, q6_balt$year, sum) # get total emissions
+df6_la <- tapply(q6_la$Emissions, q6_la$year, sum) # get total emissions
+
+df6_balt <- as.data.frame(df6_balt); colnames(df6_balt) <- "total_emissions"
+df6_la <- as.data.frame(df6_la); colnames(df6_la) <- "total_emissions"
+
+df6_balt$year <- rownames(df6_balt); df6_balt <- select(df6_balt, year, total_emissions); df6_balt
+df6_la$year <- rownames(df6_la); df6_la <- select(df6_la, year, total_emissions); df6_la
+
+merged <- merge(df6_balt, df6_la, by = "year")
+colnames(merged) <- c("year", "Baltimore", "Los Angeles")
+melted <- melt(merged, id=c("year"), measure.vars = c("Baltimore", "Los Angeles"))
+
+png(filename = "plot6.png", width = 9, height = 6, units = "in", res = 300)
+ggplot(melted, aes(x=year, y=value)) + 
+  geom_bar(stat="identity") +
+  theme_classic() +
+  #scale_color_brewer(name = "Four sources:", palette="Dark2") +
+  labs(title = "Total motor vehicle emissions from PM2.5 for Baltimore and Los Angeles from 1999–2008") +
+  ylab("Total PM2.5 emissions, in tons") + xlab("Year") +
+  facet_wrap(~ variable)
+dev.off()
+```
+
+## Reproducible Research (Coursera)
+
+```{r Reproducible Research, echo=FALSE}
+## Week 1 - Concepts, ideas & structure
+library(kernlab); data(spam)
+# perform the subsampling
+set.seed(3435)
+trainIndicator <- rbinom(4601, size=1, prob=0.5)
+table(trainIndicator)
+trainSpam <- spam[trainIndicator==1,]
+testSpam <- spam[trainIndicator==0,]
+# EDA
+names(trainSpam); head(trainSpam)
+table(trainSpam$type)
+boxplot(capitalAve ~ type, data = trainSpam)
+boxplot(log10(capitalAve + 1) ~ type, data = trainSpam)
+pairs(log10(trainSpam[, 1:4] + 1)) # pairwise relationships between the different variables
+hCluster = hclust(dist(t(trainSpam[, 1:57]))); plot(hCluster)
+hClusterUpdated = hclust(dist(t(log10(trainSpam[, 1:55] + 1)))); plot(hClusterUpdated)
+# Statistical modeling with single predictor
+trainSpam$numType = as.numeric(trainSpam$type) - 1
+costFunction = function(x, y) sum(x != (y > 0.5))
+cvError = rep(NA, 55)
+library(boot)
+for (i in 1:55) {
+  lmFormula = reformulate(names(trainSpam)[i], response = "numType")
+  glmFit = glm(lmFormula, family = "binomial", data = trainSpam)
+  cvError[i] = cv.glm(trainSpam, glmFit, costFunction,2)$delta[2]
+}
+## Which predictor has minimum cross-validated error?
+names(trainSpam)[which.min(cvError)]
+# get a measure of uncertainty
+# use the best model from the group
+predictionModel = glm(numType ~ charDollar, family = "binomial", data = trainSpam)
+# get predictions on the test set
+predictionTest = predict(predictionModel, testSpam)
+predictedSpam = rep("nonspam", dim(testSpam)[1])
+# classify as `spam' for those with prob > 0.5
+predictedSpam[predictionModel$fitted > 0.5] = "spam"
+table(predictedSpam, testSpam$type)
+# error rate
+(61 + 458)/(1346 + 458 + 61 + 449) # 0.2242869
+
+## Week 2 - Markdown and knitr
+# Week 2 PA
+
+
+
 
 
 ```
+
 
 
 
