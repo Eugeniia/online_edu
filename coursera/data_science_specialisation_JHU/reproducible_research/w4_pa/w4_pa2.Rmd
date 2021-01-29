@@ -1,0 +1,343 @@
+---
+title: "Analysis of the most harmful events with respect to population and economics health"
+author: "Evgeniia Golovina"
+date: "27/01/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# load packages
+library(ggplot2); library(pander); library(dplyr); library(stringr); library(ggpubr)
+# don't show warnings
+options(warn=-1)
+```
+
+## Synopsis
+
+According to the National Oceanic and Atmospheric Administration's (NOAA) storm database, tornado and tsunami are the most harmful with respect to population health. In total, tornado caused 91346 injuries and 5633 fatalities, while tsunami caused more injuries and fatalities on average across the United States - 6.45 and 1.65 correspondingly.
+
+With respect to economic health, drought, flood, and storm surge/tide have the greatest economic consequences. In total and on average, drought is the most harmfult event to crops. Crop estimates by drought is 13,972,566,000 in total and 9,198,529 an average. In terms of property damage, flood and storm surge/tide are the most dangerous to economics. Flood is the most harmful event in total damaging about 144,766,000,000 properties, while storm surge/tide is harmful on average - the mean number of property damage is equal to 32008193.
+
+
+## 1. Data Processing
+
+First, let's download the storm database and read it. The database contains 37 variables and 902,297 observations.
+
+```{r loading, echo=TRUE, cache=TRUE}
+file_url <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2"
+temp <- tempfile(); download.file(file_url,temp)
+file.copy(from = temp, to = paste0(getwd(),"/raw_data.csv.bz2")) # download zip file as raw_data.csv.bz2; returns FALSE if the file already exists
+unlink(temp) # delete the temp file or use file.remove(temp)
+df <- read.csv(bzfile("raw_data.csv.bz2")) # read the file as a dataframe
+#str(df) # 37 variables and 902,297 observations
+```
+
+Let's explore what types of events (i.e. EVTYPE variable) happened across the United States.
+
+```{r event_types, echo=TRUE, cache=TRUE}
+event_type <- unique(df$EVTYPE)
+#length(event_type) # 985 different types of events
+```
+
+In total, there are `r pander(length(event_type))` different types of events happened across the United States. According to storm data event table from [Storm Data Documentation](https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2Fpd01016005curr.pdf), there are only 48 types of events. Our EVTYPE variable needs a preprocessing:
+
+1. Make all the latters lowercase
+2. Remove extra space in the event name
+3. Remove all observations that starts with "summary"
+4. Remove "(" and ")" from names
+5. Remove numbers in the beginning and the end of the name
+6. Remove extra space in the event name
+7. Replace "winds", "wnd", "wins", "win", "windd" with "wind"
+8. Replace "storms" with "storm"
+9. Replace "flooding" with "flood"
+10. Replace "rains" with "rain"
+11. Replace "landslides" with "landslide"
+12. Replace "tornados" with "tornado"
+13. Replace "tstm" with "thunderstorm"
+14. Replace "wild fires" with "wildfire"
+15. Remove extra space in the event name
+16. Replace "windter" with "winter"
+17. Replace "waterspout/tornado" with "waterspout tornado"
+18. Replace "thundersnow" and "thunderstormw" with "thunderstorm"
+19. Replace "lightning injury" with "lightning"
+20. Replace "cstl" with "coastal"
+20. Remove observations that have event name as "high". "?" or "other"
+21. Replace "cstl" with "coastal"
+22. Replace "fld" with "flood"
+22. Replace "currents" with "current"
+23. Subset only observations that have these 48 event types
+
+```{r preprocessing, cache=TRUE}
+# make all the letters lowercase
+df$EVTYPE <- tolower(df$EVTYPE) # 898 different types of events
+# remove extra spaces in the event names
+df$EVTYPE <- str_squish(df$EVTYPE) # 883
+# remove all observations that starts with "summary"
+df <- df[!grepl("^summary", gsub("\\.", "", df$EVTYPE,)),] # 817
+# remove "(" and ")" from names
+df$EVTYPE <- gsub("\\(", "", df$EVTYPE,); df$EVTYPE <- gsub("\\)", "", df$EVTYPE,) # 815
+# remove numbers in the beginning and the end of the name
+df$EVTYPE <- gsub("^\\d+|\\d+$", "", df$EVTYPE) # 754
+# remove extra spaces in the event names
+df$EVTYPE <- str_squish(df$EVTYPE) # 746
+# replace "winds", "wnd", "wins" with "wind"
+df$EVTYPE <- gsub("winds", "wind", df$EVTYPE,); df$EVTYPE <- gsub("wnd", "wind", df$EVTYPE,)
+df$EVTYPE <- gsub("wins", "wind", df$EVTYPE,) # 726
+# replace "storms" with "storm"
+df$EVTYPE <- gsub("storms", "storm", df$EVTYPE,) # 721
+# replace "flooding" with "flood"
+df$EVTYPE <- gsub("flooding", "flood", df$EVTYPE,) # 709
+# replace "rains" with "rain"
+df$EVTYPE <- gsub("rains", "rain", df$EVTYPE,) # 707
+# replace "landslides" with "landslide"
+df$EVTYPE <- gsub("landslides", "landslide", df$EVTYPE,) # 706
+# replace "tornados" with "tornado"
+df$EVTYPE <- gsub("tornados", "tornado", df$EVTYPE,) # 705
+# replace "tstm" with "thunderstorm"
+df$EVTYPE <- gsub("tstm", "thunderstorm", df$EVTYPE,) # 701
+# replace "wild fires" with "wildfire"
+df$EVTYPE <- gsub("wild fires", "wildfire", df$EVTYPE,) # 700
+# remove extra spaces in the event names
+df$EVTYPE <- str_squish(df$EVTYPE) # 698
+# replace "winds", "wnd", "wins", "win", "windd" with "wind"
+df$EVTYPE <- gsub("winds", "wind", df$EVTYPE,); df$EVTYPE <- gsub("wnd", "wind", df$EVTYPE,)
+df$EVTYPE <- gsub("wins", "wind", df$EVTYPE,); df$EVTYPE <- gsub("win", "wind", df$EVTYPE,)
+df$EVTYPE <- gsub("windd", "wind", df$EVTYPE,) # 696
+# replace "windter" with "winter"
+df$EVTYPE <- gsub("windter", "winter", df$EVTYPE,) 
+# replace "waterspout/tornado" with "waterspout tornado"
+df$EVTYPE <- gsub("waterspout/tornado", "waterspout tornado", df$EVTYPE,)
+# replace "thundersnow" and "thunderstormw" with "thunderstorm"
+df$EVTYPE <- gsub("thundersnow", "thunderstorm", df$EVTYPE,)
+df$EVTYPE <- gsub("thunderstormw", "thunderstorm", df$EVTYPE,)
+# replace "lightning injury" with "lightning"
+df$EVTYPE <- gsub("lightning injury", "lightning", df$EVTYPE,) # 691
+# replace "cstl" with "coastal"
+df$EVTYPE <- gsub("cstl", "coastal", df$EVTYPE,) # 690
+# replace "fld" with "flood"
+df$EVTYPE <- gsub("fld", "flood", df$EVTYPE,) # 689
+# replace "currents" with "current"
+df$EVTYPE <- gsub("currents", "current", df$EVTYPE,) # 689
+# Subset only observations that have these 48 event types
+events_48 <- c("astronomical low tide", "avalanche", "blizzard", "coastal flood", "cold/wind chill",
+               "debris flow", "dense fog", "dense smoke", "drought", "dust devil", "dust storm",
+               "excessive heat", "extreme cold/wind chill", "flash flood", "flood", "frost/freeze",
+               "funnel cloud", "freezing fog", "hail", "heat", "heavy rain", "heavy snow", "high surf",
+               "high wind", "hurricane typhoon", "ice storm", "lake-effect snow", "lakeshore flood",
+               "lightning", "marine hail", "marine high wind", "marine strong wind",
+               "marine thunderstorm wind", "rip current", "seiche", "sleet", "storm surge/tide",
+               "strong wind", "thunderstorm wind", "tornado", "tropical depression", "tropical storm",
+               "tsunami", "volcanic ash", "waterspout", "wildfire", "winter storm", "winter weather")
+
+df_48 <- df[df$EVTYPE %in% events_48,] # 46 types of events
+#length(unique(df_48$EVTYPE))
+```
+
+Let's explore the CROPDM/CROPDMGEXP and PROPDM/PROPDMGEXP variables. We need to convert “K” for thousands, “M” for millions, and “B” for billions.
+We did the following transformations to clean the CROPDM/CROPDMGEXP and PROPDM/CROPDMGEXP variables:
+
+1. Make all the letters lowercase
+2. Include in the final dataset only observations that have "k", "m" and "m" values for CROPDMGEXP and CROPDMGEXP variables.
+3. Create a new variable with actual numbers for CROPDM and PROPDM to actual numbers after translating “K” to thousands, “M” to millions, and “B” to billions.
+4. Subset the observations that have more than 0 amount for new variables.
+
+```{r crop_prop_cleaning, echo=TRUE, cache=TRUE}
+# make all the letters lowercase
+df_48$CROPDMGEXP <- tolower(df_48$CROPDMGEXP)
+df_48$PROPDMGEXP <- tolower(df_48$PROPDMGEXP)
+# remove all observations that don't have "k", "m" or "b"
+tr <- c("k", "m", "b")
+df_48_cr <- df_48[df_48$CROPDMGEXP %in% tr,] # 282,592
+df_48_pr <- df_48[df_48$PROPDMGEXP %in% tr,] # 431,652
+# create new variables for crop
+for(i in 1:length(df_48_cr$CROPDMGEXP)){
+  if(df_48_cr$CROPDMGEXP[i]=="k"){
+    df_48_cr$CROPDMGEXP[i] <- as.numeric(1000)
+  } else if(df_48_cr$CROPDMGEXP[i]=="m"){
+    df_48_cr$CROPDMGEXP[i] <- as.numeric(1000000)
+  } else if(df_48_cr$CROPDMGEXP[i]=="b"){
+    df_48_cr$CROPDMGEXP[i] <- as.numeric(1000000000)
+  }
+}
+df_48_cr$CROPDMG_NEW <- df_48_cr$CROPDMG*as.numeric(df_48_cr$CROPDMGEXP)
+# create new variables for property
+for(i in 1:length(df_48_pr$PROPDMGEXP)){
+  if(df_48_pr$PROPDMGEXP[i]=="k"){
+    df_48_pr$PROPDMGEXP[i] <- as.numeric(1000)
+  } else if(df_48_pr$PROPDMGEXP[i]=="m"){
+    df_48_pr$PROPDMGEXP[i] <- as.numeric(1000000)
+  } else if(df_48_pr$PROPDMGEXP[i]=="b"){
+    df_48_pr$PROPDMGEXP[i] <- as.numeric(1000000000)
+  }
+}
+df_48_pr$PROPDMG_NEW <- df_48_pr$PROPDMG*as.numeric(df_48_pr$PROPDMGEXP)
+```
+
+Let's subset those events that have: 
+
+1. number of injuries > 0
+2. number of fatalities > 0
+3. crop damage amount > 0
+4. property damage amount > 0
+
+```{r subsetting_inj_fat_crop_prop, echo=TRUE, cache=TRUE}
+sub_df_inj <- subset(df_48, df_48$INJURIES>0)
+#length(unique(sub_df_inj$EVTYPE))
+sub_df_fat <- subset(df_48, df_48$FATALITIES>0)
+#length(unique(sub_df_fat$EVTYPE))
+sub_df_crop <- subset(df_48_cr, df_48_cr$CROPDMG_NEW>0)
+#length(unique(sub_df_crop$EVTYPE)) # 45
+sub_df_prop <- subset(df_48_pr, df_48_pr$PROPDMG_NEW>0)
+#length(unique(sub_df_prop$EVTYPE)) # 46
+```
+
+In total, there are `r pander(length(unique(sub_df_inj$EVTYPE)))` types of events that caused at least one injury, and there are `r pander(length(unique(sub_df_fat$EVTYPE)))` types of events that caused at least one fatality. In total, there are `r pander(length(unique(sub_df_crop$EVTYPE)))` types of events that lead to crop damage. And there are `r pander(length(unique(sub_df_prop$EVTYPE)))` types of events that cause property damage.
+
+
+## 2. Results
+
+To understand which types of events are most harmful with respect to population health, we are going to explore `r pander(length(unique(sub_df_inj$EVTYPE)))` types of events that caused at least one injury, and those that caused at least one fatality. First, let's calculate the total number and mean of the injuries per each event type.
+
+```{r total_and_mean_inj, echo=TRUE, cache=TRUE}
+event_inj <- unique(sub_df_inj$EVTYPE) # 35 types of events
+df_48_inj <- df_48[df_48$EVTYPE %in% event_inj, ] # 882,748 observations for these 35 types of events
+# get total number of injuries
+inj_total <- df_48_inj %>% group_by(EVTYPE) %>% summarise(total_inj = sum(INJURIES))
+# get the mean
+inj_mean <- df_48_inj %>% group_by(EVTYPE) %>% summarise(mean_inj = mean(INJURIES))
+
+max_tot_inj_event <- as.list(inj_total[inj_total$total_inj==max(inj_total$total_inj),]) # tornado - 91346 injuries
+max_mean_inj_event <- as.list(inj_mean[inj_mean$mean_inj==max(inj_mean$mean_inj),]) # tsunami - 6.45
+```
+
+In total, `r pander(length(unique(sub_df_inj$EVTYPE)))` types of events that caused at least one fatality Let's calculate the total number and mean of the fatalities per each event type.
+
+```{r total_and_mean_fat, echo=TRUE, cache=TRUE}
+event_fat <- unique(sub_df_fat$EVTYPE) # 34 types of events
+df_48_fat <- df_48[df_48$EVTYPE %in% event_fat, ] # 873,475 observations for these 34 types of events
+# get total number of injuries
+fat_total <- df_48_fat %>% group_by(EVTYPE) %>% summarise(total_fat = sum(FATALITIES))
+# get the mean
+fat_mean <- df_48_fat %>% group_by(EVTYPE) %>% summarise(mean_fat = mean(FATALITIES))
+
+max_tot_fat_event <- as.list(fat_total[fat_total$total_fat==max(fat_total$total_fat),]) # tornado - 5633 injuries
+max_mean_fat_event <- as.list(fat_mean[fat_mean$mean_fat==max(fat_mean$mean_fat),]) # tsunami - 1.65
+```
+
+The figure below shows the total number of injuries and fatalities accross each event type. Overall, `r max_tot_inj_event$EVTYPE` had the total number of injuries - `r pander(max_tot_inj_event$total_inj)`.
+The `r max_tot_fat_event$EVTYPE` had the total number of fatalities - `r pander(max_tot_fat_event$total_fat)`.
+
+```{r total_number, echo=TRUE, cache=TRUE}
+# Barplots of total number of injuries and fatalities per event type
+inj <- ggplot(inj_total, aes(inj_total$EVTYPE, inj_total$total_inj)) + 
+  geom_bar(position="dodge", stat="identity") + 
+  xlab("Event type") + ylab ("Total number of injuries") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust=1, size = 7),
+        axis.title.x = element_text(size = 8),
+        axis.title.y = element_text(size = 8),
+        axis.text.y = element_text(size = 7))
+
+fat <- ggplot(fat_total, aes(fat_total$EVTYPE, fat_total$total_fat)) + 
+  geom_bar(position="dodge", stat="identity") + 
+  xlab("Event type") + ylab ("Total number of fatalities") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust=1, size = 7),
+        axis.title.x = element_text(size = 8),
+        axis.title.y = element_text(size = 8),
+        axis.text.y = element_text(size = 7))
+# Arrange on one page
+figure <- ggarrange(inj, fat, ncol = 1, nrow = 2)
+annotate_figure(figure,
+                top = text_grob("Fig.1. The total number of injuries and fatalities for each event type", 
+                                face = "bold", size = 12))
+```
+
+However, on average, across the United States `r max_mean_inj_event$EVTYPE` caused more injuries - `r pander(max_mean_inj_event$mean_inj)`. The `r max_mean_fat_event$EVTYPE` caused more injuries - `r pander(max_mean_fat_event$mean_fat)`.
+
+The figure below displays the average number of injuries for each event type.
+
+```{r mean_number, echo=TRUE, cache=TRUE}
+# Barplots of mean number of injuries and fatalities per event type
+inj_m <- ggplot(inj_mean, aes(inj_mean$EVTYPE, inj_mean$mean_inj)) + 
+  geom_bar(position="dodge", stat="identity") + 
+  xlab("Event type") + ylab ("Mean number of injuries") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust=1, size = 7),
+        axis.title.x = element_text(size = 8),
+        axis.title.y = element_text(size = 8),
+        axis.text.y = element_text(size = 7))
+
+fat_m <- ggplot(fat_mean, aes(fat_mean$EVTYPE, fat_mean$mean_fat)) + 
+  geom_bar(position="dodge", stat="identity") + 
+  xlab("Event type") + ylab ("Mean number of fatalities") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust=1, size = 7),
+        axis.title.x = element_text(size = 8),
+        axis.title.y = element_text(size = 8),
+        axis.text.y = element_text(size = 7))
+# Arrange on one page
+figure_m <- ggarrange(inj_m, fat_m, ncol = 1, nrow = 2)
+annotate_figure(figure_m,
+                top = text_grob("Fig.2. The mean number of injuries and fatalities for each event type", 
+                                face = "bold", size = 12))
+```
+
+To understand which types of events have the greatest economic consequences across the united States, we focused on two parameters - new crop and property damage amounts we calculated for each event type.
+
+```{r crop_damage, echo=TRUE, cache=TRUE}
+event_cr <- unique(sub_df_crop$EVTYPE) # 27 types of events
+df_cr <- df_48_cr[df_48_cr$EVTYPE %in% event_cr, ]
+# get total crop damage amount
+cr_tot <- df_cr %>% group_by(EVTYPE) %>% summarise(tot_cr = sum(CROPDMG_NEW))
+# get the mean
+cr_mean <- df_cr %>% group_by(EVTYPE) %>% summarise(mean_cr = mean(CROPDMG_NEW))
+
+max_tot_cr_event <- as.list(cr_tot[cr_tot$tot_cr==max(cr_tot$tot_cr),]) # drought - 13972566000
+max_mean_cr_event <- as.list(cr_mean[cr_mean$mean_cr==max(cr_mean$mean_cr),]) # drought - 9198529
+```
+
+Overall, `r max_tot_cr_event$EVTYPE` caused the maximum crop damadge - `r pander(max_tot_cr_event$tot_cr)`. The `r max_mean_cr_event$EVTYPE` is also the most harmful on average across the United States - `r pander(max_mean_cr_event$mean_cr)`.
+
+```{r prop_damage, echo=TRUE, cache=TRUE}
+event_pr <- unique(sub_df_prop$EVTYPE) # 45 types of events
+df_pr <- df_48_pr[df_48_pr$EVTYPE %in% event_pr, ]
+# get total crop damage amount
+pr_tot <- df_pr %>% group_by(EVTYPE) %>% summarise(tot_pr = sum(PROPDMG_NEW))
+# get the mean
+pr_mean <- df_pr %>% group_by(EVTYPE) %>% summarise(mean_pr = mean(PROPDMG_NEW))
+
+max_tot_pr_event <- as.list(pr_tot[pr_tot$tot_pr==max(pr_tot$tot_pr),]) # flood - 1.44766e+11
+max_mean_pr_event <- as.list(pr_mean[pr_mean$mean_pr==max(pr_mean$mean_pr),]) # storm surge/tide - 32008193
+```
+
+Overall, `r max_tot_pr_event$EVTYPE` caused the total property damadge - `r pander(max_tot_pr_event$tot_pr)`. However, the `r max_mean_pr_event$EVTYPE` is the most harmful on average across the United States - `r pander(max_mean_pr_event$mean_pr)`.
+
+The figure below displays the average amount of crop and property damage for each event type.
+
+```{r crop_and_prop_mean_damage, echo=TRUE, cache=TRUE}
+# Mean number of crop damage amount per event type
+cr <- ggplot(cr_mean, aes(cr_mean$EVTYPE, cr_mean$mean_cr)) + geom_point() + 
+  xlab("Event type") + ylab ("Mean crop damage") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust=1, size = 7),
+        axis.title.x = element_text(size = 8),
+        axis.title.y = element_text(size = 8),
+        axis.text.y = element_text(size = 7))
+# Mean number of property damage amount per event type
+pr <- ggplot(pr_mean, aes(pr_mean$EVTYPE, pr_mean$mean_pr)) + geom_point() + 
+  xlab("Event type") + ylab ("Mean property damage") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust=1, size = 7),
+        axis.title.x = element_text(size = 8),
+        axis.title.y = element_text(size = 8),
+        axis.text.y = element_text(size = 7))
+# Arrange on one page
+figure <- ggarrange(cr, pr, ncol = 1, nrow = 2)
+annotate_figure(figure,
+                top = text_grob("Fig.3. The average amount of crop and property damage for each event type", face = "bold", size = 12))
+```
+
+To sum up, we calculated the total and mean number of injuries and fatalities caused by each event type in order to understand which type is the most harmful with respect to population health. Also, we calculated the total and mean amount of crop and property damage caused by each event type in order to understand which type cause the greatest economical consequences.
