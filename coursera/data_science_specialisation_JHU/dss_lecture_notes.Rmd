@@ -8,7 +8,7 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, results="hide")
 
 setwd("/Users/foffa/Desktop/Learning/online_edu")
 ```
@@ -17,7 +17,7 @@ This is an R Markdown document about my experience to learn R.
 
 ## The Data Scientist’s Toolbox (Coursera)
 
-```{r The Data Scientist’s Toolbox, echo=FALSE}
+```{r The_Data_Scientists_Toolbox, echo=FALSE}
 # installing from CRAN
 install.packages("ggplot2")
 install.packages(c("ggplot2", "devtools", "lme4"))
@@ -47,7 +47,7 @@ help(package = "ggplot2")
 browseVignettes("ggplot2") # to get extra help info
 ```
 
-## R Programming (Coursera)
+## R_Programming (Coursera)
 
 ```{r R Programming}
 ## Week 1
@@ -1660,7 +1660,7 @@ co # 47
 
 ## Exploratory Data Analysis (Coursera)
 
-```{r Exploratory Data Analysis, echo=FALSE}
+```{r Exploratory_Data_Analysis, echo=FALSE}
 ## Week 1
 # L1 Graphs
 # Principles of Analytic Graphics
@@ -2211,7 +2211,7 @@ dev.off()
 
 ## Reproducible Research (Coursera)
 
-```{r Reproducible Research, echo=FALSE}
+```{r Reproducible_Research, echo=FALSE}
 ## Week 1 - Concepts, ideas & structure
 library(kernlab); data(spam)
 # perform the subsampling
@@ -2254,13 +2254,327 @@ table(predictedSpam, testSpam$type)
 
 ## Week 2 - Markdown and knitr
 # Week 2 PA
+output_dir <- file.path(getwd(), "figure")
+if (!dir.exists(output_dir)) {dir.create(output_dir)} # create figure directory
+```
 
+## Statistical Inference (Coursera)
 
+```{r Statistical_Inference}
+# Week 1
+# Q1 - 11%
+# Q2 - 0.75
+# Q3 - p/(1-p) = Y/X
+# Q4 - The median must be 0
+# Q5 - 3
+# Q6 - 40%
 
+# Week 2
+# Q1 - σ^2/n
+# Q2 - How many sds below the mean 70 is? (70-80)/10 = -1;pnorm(-1) = ~16%
+# Q3 - qnorm(.95, mean = 1100, sd = 75) = ~1223
+# Q4 - qnorm(0.95, mean = 1100, sd = 75/sqrt(100)) ~1112
+# Q5 - pbinom(3, size = 5, prob = 0.5, lower.tail = FALSE) 0.1875
+# Q6 - pnorm(16, mean = 15, sd = 1) - pnorm(14, mean = 15, sd = 1) 0.6827
+# Q7 - According to the LLN it should be near .5
+# Q8 - ppois(10, lambda = 5*3) 0.1185
+
+# Week 3
 
 
 ```
 
 
+
+
+## Developing Data Products (Coursera)
+
+```{r Developing_Data_Products}
+## Week 1
+#install.packages("shiny")
+library(shiny)
+# http://shiny.rstudio.com/tutorial/
+setwd("/Users/foffa/Desktop/Learning/online_edu/coursera/data_science_specialisation_JHU/developing_data_products/my_app")
+runApp() # to run app
+runApp("path_to_the_app")
+?builder # HTML tags in shiny
+
+# ui.R
+shinyUI(pageWithSidebar(
+  headerPanel("Illustrating markup"),
+  sidebarPanel(
+      h1('Sidebar panel'),
+      h1('H1 text'),
+      h2('H2 Text'),
+      h3('H3 Text'),
+      h4('H4 Text')
+  ),
+  mainPanel(
+      h3('Main Panel text'),
+      code('some code'),
+      p('some ordinary text')
+  )
+))
+
+# sliderInput() # create slider and display it; labels have to match!
+# ui.R
+shinyUI(fluidPage(
+  titlePanel("Slider App"),
+  sidebarLayout(
+    sidebarPanel(
+      h1('Move the slider!'),
+      sliderInput("slider2", "Slide Me!", 0, 100, 0)
+  ),
+  mainPanel(
+      h3('Slider Value:'),
+      textOutput("text1")
+  ))
+))
+# server.R
+shinyServer(function(input, output) {
+  output$text1 = renderText(input$slider2)
+})
+
+# Illustrating inputs ui.R
+# ui.R
+shinyUI(pageWithSidebar(
+    headerPanel("Illustrating inputs"),
+    sidebarPanel(
+        numericInput('id1', 'Numeric input, labeled id1', 0, min = 0, max = 10, step = 1),
+        checkboxGroupInput("id2", "Checkbox",
+                           c("Value 1" = "1",
+                             "Value 2" = "2",
+                             "Value 3" = "3")),
+        dateInput("date", "Date:")  
+    ),
+    mainPanel(
+        h3('Illustrating outputs'),
+        h4('You entered'),
+        verbatimTextOutput("oid1"),
+        h4('You entered'),
+        verbatimTextOutput("oid2"),
+        h4('You entered'),verbatimTextOutput("odate")
+    )
+))
+# server.R
+shinyServer(function(input, output) {
+    output$oid1 <- renderPrint({input$id1})
+    output$oid2 <- renderPrint({input$id2})
+    output$odate <- renderPrint({input$date})
+})
+
+# Building a prediction function
+# ui.R
+shinyUI(
+  pageWithSidebar(
+    # Application title
+    headerPanel("Diabetes prediction"),
+  
+    sidebarPanel(
+      numericInput('glucose', 'Glucose mg/dl', 90, min = 50, max = 200, step = 5),
+      submitButton('Submit')
+    ),
+    mainPanel(
+        h3('Results of prediction'),
+        h4('You entered'),
+        verbatimTextOutput("inputValue"),
+        h4('Which resulted in a prediction of '),
+        verbatimTextOutput("prediction")
+    )
+  )
+)
+# server.R
+diabetesRisk <- function(glucose) glucose / 200
+
+shinyServer(
+  function(input, output) {
+    output$inputValue <- renderPrint({input$glucose})
+    output$prediction <- renderPrint({diabetesRisk(input$glucose)})
+  }
+)
+
+# image example
+# ui.R
+shinyUI(pageWithSidebar(
+  headerPanel("Example plot"),
+  sidebarPanel(
+    sliderInput('mu', 'Guess at the mean',value = 70, min = 62, max = 74, step = 0.05,)
+  ),
+  mainPanel(
+    plotOutput('newHist')
+  )
+))
+# server.R
+library(UsingR)
+data(galton)
+
+shinyServer(
+  function(input, output) {
+    output$newHist <- renderPlot({
+      hist(galton$child, xlab='child height', col='lightblue',main='Histogram')
+      mu <- input$mu
+      lines(c(mu, mu), c(0, 200),col="red",lwd=5)
+      mse <- mean((galton$child - mu)^2)
+      text(63, 150, paste("mu = ", mu))
+      text(63, 140, paste("MSE = ", round(mse, 2)))
+      })
+    
+  }
+)
+
+# Random numbers plot
+# ui.R
+library(shiny)
+shinyUI(fluidPage(
+    titlePanel("Plot Random Numbers"),
+    sidebarLayout(
+        sidebarPanel(
+            numericInput("numeric", "How many random numbers should be plotted?",
+                         value = 1000, min = 1, max = 1000, step = 1),
+            sliderInput("sliderX", "Pick minimum and maximum x values",
+                        -100, 100, value = c(-50, 50)),
+            sliderInput("sliderY", "Pick minimum and maximum y values",
+                        -100, 100, value = c(-50, 50)),
+            checkboxInput("show_xlab", "Show/hide x axis label", value = TRUE),
+            checkboxInput("show_ylab", "Show/hide y axis label", value = TRUE),
+            checkboxInput("show_title", "Show/hide title")
+        ),
+        mainPanel(
+            h3('graph of random points'),
+            plotOutput("plot1")
+        )
+    )
+))
+# server.R
+library(shiny)
+library(UsingR)
+data(galton)
+shinyServer(function(input, output) {
+        output$plot1 <- renderPlot({
+            set.seed(2016-05-25)
+            number_of_points <- input$numeric
+            minX <- input$sliderX[1]
+            maxX <- input$sliderX[2]
+            minY <- input$sliderY[1]
+            maxY <- input$sliderY[2]
+            dataX <- runif(number_of_points, minX, maxX)
+            dataY <- runif(number_of_points, minY, maxY)
+            xlab <- ifelse(input$show_xlab, "X axis", "")
+            ylab <- ifelse(input$show_ylab, "Y axis", "")
+            main <- ifelse(input$show_title, "Title", "")
+            plot(dataX, dataY, xlab=xlab, ylab=ylab, main=main,
+                 xlim = c(-100,100), ylim=c(-100,100))
+        })
+    }
+)
+
+# Reactivity
+# the reactive statements server.R functions seemingly follow different rules than ordinary R functions.
+# Code in reactive functions of shinyServer get run repeatedly as needed when new values are entered. Reactive functions are those like renderPlot and renderPrint
+# Example with prediction
+# ui.R
+library(shiny)
+shinyUI(fluidPage(
+    titlePanel("Predict Horsepower from MPG"),
+    sidebarLayout(
+        sidebarPanel(
+            sliderInput("sliderMPG", "What is the MPG of the car?", 10, 35, value = 20),
+            checkboxInput("showModel1", "Show/hide Model 1", value = TRUE),
+            checkboxInput("showModel2", "Show/hide Model 2", value = TRUE),
+            submitButton("Submit")
+        ),
+        mainPanel(
+            plotOutput("plot1"),
+            h3('Predicted Horsepower from Model 1:'),
+            textOutput("pred1"),
+            h3('Predicted Horsepower from Model 2:'),
+            textOutput("pred2")
+        )
+    )
+))
+# server.R
+library(shiny)
+shinyServer(function(input, output) {
+    mtcars$mpgsp <- ifelse(mtcars$mpg - 20 > 0, mtcars$mpg - 20, 0)
+    model1 <- lm(hp ~ mpg, data = mtcars)
+    model2 <- lm(hp ~ mpgsp + mpg, data = mtcars)
+    
+    model1pred <- reactive({
+        mpgInput <- input$sliderMPG
+        predict(model1, newdata = data.frame(mpg = mpgInput))
+    })
+    
+    model2pred <- reactive({
+        mpgInput <- input$sliderMPG
+        predict(model2, newdata = data.frame(mpg = mpgInput,
+                                             mpgsp = ifelse(mpgInput - 20 > 0,
+                                                            mpgInput - 20, 0)))
+    })
+    
+        output$plot1 <- renderPlot({
+            mpgInput <- input$sliderMPG
+            
+            plot(mtcars$mpg, mtcars$hp, xlab = "Miles per gallon",
+                 ylab = "Horsepower", bty = "n", pch = 16,
+                 xlim = c(10, 35), ylim = c(50, 350))
+            if(input$showModel1){
+                abline(model1, col = "red", lwd = 2)
+            }
+            if(input$showModel2){
+                model2lines <- predict(model2, newdata = data.frame(
+                    mpg = 10:35, mpgsp = ifelse(10:35 - 20 > 0, 10:35 - 20, 0)
+                ))
+                lines(10:35, model2lines, col = "blue", lwd = 2)
+            }
+            legend(25, 250, c("Model 1 Prediction", "Model 2 Prediction"), pch = 16,
+                   col = c("red", "blue"), bty = "n", cex = 1.2)
+            points(mpgInput, model1pred(), col = "red", pch = 16, cex = 2)
+            points(mpgInput, model2pred(), col = "blue", pch = 16, cex = 2)
+        })
+        output$pred1 <- renderText({
+            model1pred()
+        })
+        output$pred2 <- renderText({
+            model2pred()
+        })
+    }
+)
+
+# Advanced UI
+# Examples to use tabs: tabsetPanel(), tabPanel()
+# ui.R
+library(shiny)
+shinyUI(fluidPage(
+    titlePanel("Tabs!"),
+    sidebarLayout(
+        sidebarPanel(
+            textInput("box1", "Enter tab 1 text:", value = "Tab 1!"),
+            textInput("box2", "Enter tab 2 text:", value = "Tab 2!"),
+            textInput("box3", "Enter tab 3 text:", value = "Tab 3!")
+        ),
+        mainPanel(
+            tabsetPanel(type = "tabs",
+                        tabPanel("Tab 1", br(), textOutput("out1")),
+                        tabPanel("Tab 2", br(), textOutput("out2")),
+                        tabPanel("Tab 3", br(), textOutput("out3"))
+                        )
+        )
+    )
+))
+# server.R
+library(shiny)
+shinyServer(function(input, output) {
+    output$out1 <- renderText(input$box1)
+    output$out2 <- renderText(input$box2)
+    output$out3 <- renderText(input$box3)
+    }
+)
+
+# 
+
+
+
+
+```
 
 
