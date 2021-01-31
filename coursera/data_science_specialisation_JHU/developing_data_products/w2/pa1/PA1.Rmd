@@ -1,0 +1,32 @@
+---
+title: "The location of Liggins Institute"
+author: "Evgeniia Golovina"
+date: "31 January 2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+
+library(leaflet); library(tidyr); library(dplyr)
+```
+
+This map contains the location of Liggins Institute in Auckland, New Zealand.
+
+```{r map, echo=FALSE, eval=TRUE}
+ligginsIcon <- makeIcon(
+  iconUrl = "https://pbs.twimg.com/profile_images/690310721184215040/CB72os0s_400x400.jpg",
+  iconWidth = 31*215/230, iconHeight = 31,
+  iconAnchorX = 31*215/230/2, iconAnchorY = 16
+)
+
+liginsSite <-c(
+  "<a href='https://www.auckland.ac.nz/en/liggins.html'>Liggins Institute</a>"
+)
+
+my_map <- leaflet() %>%
+  addTiles() %>%
+  addMarkers(lat=-36.86204830722877, lng=174.76937083810773, popup=liginsSite,
+             icon=ligginsIcon)
+my_map
+```
