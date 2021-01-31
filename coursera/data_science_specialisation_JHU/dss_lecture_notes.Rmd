@@ -2570,8 +2570,227 @@ shinyServer(function(input, output) {
     }
 )
 
-# 
+# Interactive graphics: using brushedPoints
+# ui.R
+library(shiny)
+shinyUI(fluidPage(
+    titlePanel("Visualize Many Models!"),
+    sidebarLayout(
+        sidebarPanel(
+            h3("Slope"),
+            textOutput("slopeOut"),
+            h3("Intercept"),
+            textOutput("intOut")
+        ),
+        mainPanel(
+            plotOutput("plot1", brush = brushOpts(
+                id = "brush1"
+            ))
+        )
+    )
+))
+# server.R
+library(shiny)
+shinyServer(function(input, output) {
+    model <- reactive({
+        brushed_data <- brushedPoints(trees, input$brush1,
+                                      xvar = "Girth", yvar = "Volume")
+        if(nrow(brushed_data) < 2){
+            return(NULL)
+        }
+        lm(Volume ~ Girth, data = brushed_data)
+    })
+    output$slopeOut <- renderText({
+        if(is.null(model())){
+            "No model found"
+        } else {
+            model()[[1]][2]
+        }
+    })
+    output$intOut <- renderText({
+        if(is.null(model())){
+            "No model found"
+        } else {
+            model()[[1]][1]
+        }
+    })
+    output$plot1 <- renderPlot({
+        plot(trees$Girth, trees$Volume, xlab = "Girth", ylab = "Volume",
+             main = "Tree measurments",
+             cex = 1.5, pch = 16, bty = "n")
+        if(!is.null(model())){
+            abline(model(), col = "blue", lwd = 2)
+        }
+    })
+    }
+)
 
+# Shiny gadgets
+library(shiny); library(miniUI)
+myFirstGadget <- function(){
+  ui <- miniPage(
+    gadgetTitleBar("My First Gadget")
+  )
+  server <- function(input, output, session){
+    observeEvent(input$done, {
+      stopApp()
+    })
+  }
+  runGadget(ui, server)
+}
+myFirstGadget()
+# Multiply numbers
+multiplyNumbers <- function(numbers1, numbers2){
+  ui <- miniPage(
+    gadgetTitleBar("Multiply Two Numbers"),
+    miniContentPanel(
+      selectInput("num1", "First Number", choices=numbers1),
+      selectInput("num2", "Second Number", choices=numbers2)
+    )
+  )
+    server <- function(input, output, session){
+      observeEvent(input$done, {
+        num1 <- as.numeric(input$num1)
+        num2 <- as.numeric(input$num2)
+        stopApp(num1 * num2)
+      })
+    }
+  runGadget(ui, server)
+}
+multiplyNumbers(1:10, 1:10)
+# Gadgets with interactive graphics
+pickTrees <- function(){
+  ui <- miniPage(
+    gadgetTitleBar("Select points by dragging your mouse"),
+    miniContentPanel(
+      plotOutput("plot", height = "100%", brush = "brush")
+    )
+  )
+  server <- function(input, output, session){
+    output$plot <- renderPlot({
+      plot(trees$Girth, trees$Volume, main = "Trees!",
+           xlab = "Girth", ylab = "Volume")
+    })
+    observeEvent(input$done, {
+      stopApp(brushedPoints(trees, input$brush, xvar = "Girth", yvar = "Volume"))
+    })
+  }
+  runGadget(ui, server)
+}
+pickTrees()
+
+# GoogleVis charts
+#Motion charts:  `gvisMotionChart`
+#Interactive maps: `gvisGeoChart`
+#Interactive tables: `gvisTable`
+#Line charts: `gvisLineChart`
+#Bar charts: `gvisColumnChart`
+#Tree maps: `gvisTreeMap`
+# Motion chart
+suppressPackageStartupMessages(library(googleVis))
+M <- gvisMotionChart(Fruits, "Fruit", "Year",
+                     options=list(width=600, height=400))
+print(M,"chart")
+plot(M)
+# plots on maps
+G <- gvisGeoChart(Exports, locationvar="Country",
+                  colorvar="Profit",options=list(width=600, height=400))
+print(G,"chart")
+plot(G)
+# specifying the region
+G2 <- gvisGeoChart(Exports, locationvar="Country",
+                  colorvar="Profit",options=list(width=600, height=400,region="150"))
+plot(G2)
+# line chart, setting more options
+df <- data.frame(label=c("US", "GB", "BR"), val1=c(1,3,4), val2=c(23,12,32))
+Line <- gvisLineChart(df, xvar="label", yvar=c("val1","val2"),
+        options=list(title="Hello World", legend="bottom",
+                titleTextStyle="{color:'red', fontSize:18}",                         
+                vAxis="{gridlines:{color:'red', count:3}}",
+                hAxis="{title:'My Label', titleTextStyle:{color:'blue'}}",
+                series="[{color:'green', targetAxisIndex: 0}, 
+                         {color: 'blue',targetAxisIndex:1}]",
+                vAxes="[{title:'Value 1 (%)', format:'##,######%'}, 
+                                  {title:'Value 2 (\U00A3)'}]",                          
+                curveType="function", width=500, height=300                         
+                ))
+plot(Line)
+# combining multiple plots together
+G <- gvisGeoChart(Exports, "Country", "Profit",options=list(width=200, height=100))
+T1 <- gvisTable(Exports,options=list(width=200, height=270))
+M <- gvisMotionChart(Fruits, "Fruit", "Year", options=list(width=400, height=370))
+GT <- gvisMerge(G,T1, horizontal=FALSE)
+GTM <- gvisMerge(GT, M, horizontal=TRUE,tableOptions="bgcolor=\"#CCCCCC\" cellspacing=10")
+plot(GTM)
+# see the HTML code
+M <- gvisMotionChart(Fruits, "Fruit", "Year", options=list(width=600, height=400))
+print(M)
+print(M, 'chart', file='myfilename.html')
+# for more info
+demo(googleVis)
+## plotly
+library(plotly)
+# basic scatterplot
+plot_ly(mtcars, x = mtcars$wt, y = mtcars$mpg, mode = "markers")
+plot_ly(mtcars, x = mtcars$wt, y = mtcars$mpg, mode = "markers", color = as.factor(mtcars$cyl))
+plot_ly(mtcars, x = mtcars$wt, y = mtcars$mpg, mode = "markers", color = mtcars$disp)
+plot_ly(mtcars, x = mtcars$wt, y = mtcars$mpg, mode = "markers", 
+        color = as.factor(mtcars$cyl), size = mtcars$hp)
+# 3D scatterplot
+set.seed(2016-07-21)
+temp <- rnorm(100, mean = 30, sd = 5)
+pressue <- rnorm(100)
+dtime <- 1:100
+plot_ly(x = temp, y = pressue, z = dtime, type = "scatter3d", mode = "markers", color = temp)
+# line graph
+data("airmiles")
+plot_ly(x = time(airmiles), y = airmiles)
+# multi-line graph
+library(plotly); library(tidyr); library(dplyr)
+data("EuStockMarkets")
+stocks <- as.data.frame(EuStockMarkets) %>%
+  gather(index, price) %>% # convert from short format to long format
+  mutate(time = rep(time(EuStockMarkets), 4))
+plot_ly(stocks, x = stocks$time, y = stocks$price, color = stocks$index)
+# histogram
+plot_ly(x = precip, type = "histogram")
+# boxplot
+plot_ly(iris, y = iris$Petal.Length, color = iris$Species, type = "box")
+# heatmap
+terrain1 <- matrix(rnorm(100*100), nrow = 100, ncol = 100)
+plot_ly(z = terrain1, type = "heatmap")
+# 3D surface
+terrain2 <- matrix(sort(rnorm(100*100)), nrow = 100, ncol = 100)
+plot_ly(z = terrain2, type = "surface")
+# choropleth maps
+state_pop <- data.frame(State = state.abb, Pop = as.vector(state.x77[,1]))
+state_pop$hover <- with(state_pop, paste(State, '<br>', "Population:", Pop))
+borders <- list(color = toRGB("red"))
+map_options <- list(scope = 'usa', projection = list(type = "albers usa"),
+                    showlakes = TRUE, lakecolor = toRGB("white"))
+plot_ly(state_pop, z = state_pop$Pop, text = state_pop$hover, locations = state_pop$State,
+        type = "choropleth", locationmode = "USA-states", color = state_pop$Pop,
+        colors = "Blues", marker = list(line = borders)) %>%
+  layout(title = "US Population in 1975", geo = map_options)
+# ggplotly - convert ggplot to plotly
+set.seed(100)
+d <- diamonds[sample(nrow(diamonds), 1000),]
+p <- ggplot(data = d, aes(x = carat, y = price)) +
+  geom_point(aes(text = paste("Clarity:", clarity)), size = 4) +
+  geom_smooth(aes(colour = cut, fill = cut)) + facet_wrap(~ cut)
+(gg <- ggplotly(p))
+plotly_POST(gg) # to post to the plotly website
+# Set environment variables (check the plotly API website): plotly_username and plotly_api_key
+# Quiz 1
+# Q1 - A server.R file containing a call to shinyServer() and A ui.R file containing a call to shinyUI()
+# Q2 - Missing a comma in the sidebar panel  
+# Q3 - The server.R output name isn't the same as the plotOutput command used in ui.R.
+# Q4 - Shiny Gadgets are designed to have small user interfaces that fit on one page; Shiny Gadgets are designed to be used by R users in the middle of a data analysis.
+# Q5 - No arguments are defined for pickXY()
+
+## Week 2
+# R Markdown
+#*** - A slide without a title
 
 
 
