@@ -2282,6 +2282,12 @@ if (!dir.exists(output_dir)) {dir.create(output_dir)} # create figure directory
 # Week 3
 
 
+
+# Week 4
+# M13 - Resampling
+
+
+
 ```
 
 
@@ -2862,6 +2868,38 @@ df %>%
 # Q4 - An R package interface to the javascript library of the same name; A javascript library for creating interactive maps
 # Q5 - leaflet(df) %>% addTiles(); addTiles(leaflet(df))
 # Q6 - addMarkers
+
+## Week 3
+# R packages
+# R classes and methods
+?methods; library(methods) # the code for implementing S4 classes/methods in R is in the methods package
+?Classes; ?Methods; ?setClass; ?setMethod; ?setGeneric
+methods("mean")
+show; showMethods("show")
+getS3method() # to print a code for a function for S3
+getMethod() # to print a code for a function for S4
+head(getS3method("mean", "default"), 10)
+# creating a polygon class; the slots for the class are x and y
+setClass("polygon",
+         representation(x = "numeric",
+                        y = "numeric"))
+# creating a plot method for polygon class
+setMethod("plot", "polygon",
+          function(x, y, ...){
+            plot(x@x, x@y, type = "n", ...)
+            xp <- c(x@x, x@x[1])
+            yp <- c(x@y, x@y[1])
+            lines(xp, yp)
+          })
+# Quiz 3
+# Q1 - An explicit software license
+# Q2 - predict, mean, show
+# Q3 - getMethod()
+# Q4 - #' This function calculates the mean; #'#' @param x is a numeric vector; #' @return the mean of x; #' @export; #' @examples; #' x <- 1:10; #' createmean(x)
+
+# PA 2 - presentation
+
+## Week 4
 
 
 ```

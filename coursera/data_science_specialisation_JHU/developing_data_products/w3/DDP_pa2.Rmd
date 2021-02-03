@@ -1,0 +1,23 @@
+---
+title: "Week 3 Assignment"
+author: "Evgeniia Golovina"
+date: "3 February 2021"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(plotly); data(airquality)
+```
+
+## Average wind speed (mph) in New York
+
+```{r echo = FALSE, eval=TRUE, render=TRUE}
+airquality <- transform(airquality, Month = factor(Month))
+x <- list(title = "Month"); y <- list(title = "Wind (mph)")
+pl <- plot_ly(airquality, y = airquality$Wind, color = airquality$Month, type = "box")
+pl <- pl %>% layout(xaxis = x, yaxis = y)
+ggplotly(pl)
+```
+
+
