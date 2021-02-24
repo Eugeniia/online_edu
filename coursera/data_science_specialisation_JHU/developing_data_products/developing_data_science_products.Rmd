@@ -603,7 +603,6 @@ Week 2 Quiz
 Week 3
 
 ```{r week_3}
-## Week 3
 # R packages
 # R classes and methods
 ?methods; library(methods) # the code for implementing S4 classes/methods in R is in the methods package

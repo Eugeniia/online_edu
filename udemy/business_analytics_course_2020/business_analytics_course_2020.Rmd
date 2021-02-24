@@ -1,0 +1,287 @@
+---
+title: "Business Analytics Course 2020"
+author: "Evgeniia Golovina"
+date: "24/02/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Business Analytics Course 2020 (Udemy)
+
+Section 3. Entering and Reading data. Data Import and Export.
+
+```{r s3}
+# reading csv, txt files
+?read.csv; ?read.table
+
+# reading xlsx files
+library(xlsx)
+ex <- read.xlsx('test.xlsx', sheetIndex = 1)
+
+# reading google sheets
+library(gsheet)
+url <- "url_to_google_sheet"
+gdata <- as.data.frame(gsheet2tbl(url))
+
+# reading other formats (e.g. .R, .RData, .tab, .csv)
+?data()
+
+# exporting data
+?write.csv()
+```
+
+Section 4. Operators in R.
+
+There are four types of operators:
+1. Assignment operators (=, <-, ->, <<-, ->>)
+2. Arithmetic operators (+, -, *, /, %%, %/%, ^)
+3. Relational operators (<, >, ==, <=, >=, !=)
+4. Logical operators (&, |, !, &&, ||)
+
+```{r s4}
+h <- 10; i <<- 11; j = 12; 13 -> k; 14 ->> l
+
+x = 5; y = 2
+x + y; x - y; x * y; x / y; x ^ y
+x %% y # gives the reminder
+x%/%y # gives the quotient
+
+# Compares all the elements
+c(T, T, F) & c(T, F, F) # T T F
+c(T, T, F) | c(T, F, F) # T T F
+
+# Element wise comparing; compares on first elements of each vector
+c(T, T, F) && c(T, F, F) # T
+c(T, T, F) && c(F, F, F) # F
+c(T, T, F) || c(F, F, F) # T
+```
+
+Section 5. Data Types and Data Structures.
+
+Data types: character, numeric, integer, logical, complex.
+Data structeres: vectors, matrices, arrays, lists, data frames.
+
+```{r s5}
+# vector: one data type
+x <- c(2, 3, 4); class(x); length(x); typeof(x)
+seq(10); seq(1, 10, 1.5)
+
+# matrix: one data type
+m <- matrix(nrow = 2, ncol = 2) # create an empty matrix
+m <- matrix(1:10, nrow = 2, ncol = 5)
+dim(m)
+# adding values by row
+m <- matrix(1:6, nrow=3, byrow=TRUE, dimnames = list(c("d", "e", "f"), c("a", "b")))
+# adding values by column
+m <- matrix(1:6, nrow=3, byrow=FALSE, dimnames = list(c("d", "e", "f"), c("a", "b")))
+# other way to construct a matrix
+m <- 1:10; dim(m) = c(5, 2)
+# adding column to a matrix (cbind)
+c = c(7, 8, 9, 10, 11); m1 <- cbind(m, c)
+# adding row to a matrix (rbind)
+c = c(1, 1, 1); m2 <- rbind(m1, c)
+
+# list: different data types
+v1 = 1:5; v2 = month.abb[4:10]; v3 = c(T, F, T, F)
+comb = c(v1, v2, v3) # all converted to characters by default
+l1 <- list(v1, v2, v3) # each vector preserve its data type
+
+# array: only one data type; stores data in more than 2 dimensions
+v1 <- c(1, 2, 3); v2 <- c(10, 11, 12, 13, 14, 15)
+column.names <- c("col1", "col2", "col3"); row.names <- c("row1", "row2", "row3")
+matrix.names <- c("m1", "m2")
+# create an array with two matrices of 3 columns and 3 rows each
+a <- array(c(v1, v2), dim = c(3, 3, 2), dimnames = list(row.names, column.names, matrix.names))
+
+# data frame: different data types; stores data in more than 2 dimensions
+df <- data.frame(name = c("N1", "N2", "N3"), age = c(10, 12, 14)); df
+# create a dataframe using vectors
+v1 <- 1:10; v2 <- paste("N", 1:10, sep=''); v3 <- round(rnorm(10, mean=25, sd=2),1)
+v4 = sample(c("M", "F"), size=10, replace=T)
+df <- data.frame(v1, v2, v3, v4); df
+```
+
+Section 6. Handling packages in R.
+
+```{r s6}
+# installing packages
+install.packages("pacman")
+install.packages(c("dplyr", "plotly"))
+
+# loading packages
+library(dplyr)
+require(plotly)
+pacman::p_load(dplyr, plotly) # to load multiple packages
+
+# viewing loaded packages
+search()
+
+# uloading packages
+detach("package:plotly", unload = TRUE)
+
+# removing packages
+remove.packages("plotly")
+
+# updating packages
+update.packages()
+update.packages(oldPkgs = c("dplyr", "plotly"))
+```
+
+Section 7. Subsetting Data in R.
+
+Three methods: 1) square bracket notation 2) subset function 3) which() and bracket notation
+
+```{r s7}
+## 1. square bracket notation
+df <- matrix(1:12, nrow = 4, byrow = F); df
+df[1, ] # subsetting the first row
+df[, 3] # subsetting the third column
+df[1:3, 2]
+
+x <- c(2, 4, 3, 5); x[c(3, 1)] # extracting the third and first elements
+x[-c(3, 1)] # extracting elements except the third and first elements
+x[c(T, T, F, F)] # selecting elements where logical value is TRUE
+x[x > 3]
+x[] # returns the original vector
+
+y <- setNames(x, letters[1:4])
+y[c("d", "c", "a")]
+
+m <- matrix(1:9, nrow = 3); colnames(m) <- c("a", "b", "c"); m
+m[1:2,]; m[3,3]
+
+df <- data.frame(x = 1:3, y = 3:1, z = letters[1:3]); df
+df[df$x==2, ]
+
+## 2. subset function
+set.seed(1234)
+x <- round(matrix(rnorm(30, 1), ncol = 5), 2); y <- c(1, seq(5))
+m <- cbind(x, y) # combining x and y into one matrix
+df <- data.frame(m) # converting to dataframe
+subset(df, y > 2) # subsetting rows
+subset(df, y > 2 & V1 > 0.2) # subsetting rows
+subset(df, y > 2 & V1 > 0.2, select = c(V1, V4)) # subsetting both rows and columns
+
+## 3. which() and bracket notation
+which(letters=="z") # getting the position of (26)
+which(letters=="s") # getting the position of s (19)
+which(women$height==66) # 9
+which(women$height>=70) # 13, 14, 15
+
+v1 <- c(2, 3, 1, 4, 5, 6, 7, 10, 12, 13, 20)
+v1 > 6 # logical
+which(v1 > 6) # getting the positions where the value is TRUE
+v1[which(v1 > 6)] # getting the actual values
+
+names <- c("jack", "jill", "tom", "buggs", "bunny")
+grep('[bu]', names, ignore.case = T); names[grep('[bu]', names, ignore.case = T)]
+
+mtcars[which(mtcars$mpg > 25), ]
+```
+
+Section 8. Descriptive Statistics.
+
+```{r s8}
+mean(mtcars$mpg) # mean
+median(mtcars$mpg) # meadian
+sd(mtcars$mpg) # standard deviation: how far the data is spread out in comparison to the mean value
+var(mtcars$mpg) # variance: how far the data is spread out
+min(mtcars$mpg) # minimum
+max(mtcars$mpg) # maximum
+range(mtcars$mpg) # range of values
+summary(mtcars$mpg) # summary statistics
+quantile(mtcars$mpg, probs = seq(0, 1, 0.25)) # sample quantiles
+rowSums(mtcars); colSums(mtcars) # row and column sums
+rowMeans(mtcars); colMeans(mtcars)# row and column means
+```
+
+Section 9. Apply Family in R.
+
+apply(), lapply(), sapply(), mapply(), tapply()
+
+```{r s9}
+## apply() operates on arrays, dataframes or matrices; returns a vector or a list
+df <- data.frame(first = c(1:10), second = c(11:20)); df
+apply(df, 2, mean) # apply mean function for columns (2)
+apply(df, 1, mean) # apply mean function for rows (1)
+
+x <- cbind(x1 = 3, x2 = c(4:1, 2:5)); x
+dimnames(x)[[1]] <- letters[1:8]; x
+apply(x, 2, mean)
+col.sums <- apply(x, 2, sum); col.sums
+row.sums <- apply(x, 1, sum); row.sums
+apply(x, 2, sort)
+
+## lapply() operates on dataframes, lists or vectors; returns a list
+a <- matrix(1:9, nrow=3, byrow=F); b <- matrix(4:15, nrow=4, byrow = F)
+c <- data.frame(x=c(8,9,10), y=c(8,9,10))
+mylist <- list(a, b, c); mylist # a list of two matrices and one dataframe
+lapply(mylist, "[", , 2) # extracting the 2nd column from mylist with the selection operator "["
+lapply(mylist, "[", 1, ) # extracting the first row from mylist
+lapply(mylist, "[", 1, 2) # extracting the first element from the 2nd column of each matrix/dataframe
+
+## sapply() operates on dataframes, lists or vectors; returns a vector
+sapply(mylist, "[", 1, 2) # returns a list
+
+## tapply() operates on vectors; returns
+am1 <- mtcars[, 'am']; amcyl1 <- mtcars[, c('cyl', 'am')]; mpg1 <- mtcars[, c('mpg')]
+tapply(mpg1, am1, mean) # mean mpg of each am type
+tapply(mpg1, amcyl1, mean) # mean mpg of each am and cyl type
+
+?rep() # replicating elements of vectors and lists
+Z <- sapply(mylist, "[", 1, 1); Z
+x <- rep(Z, c(3, 1, 2)) # repeating the 1st element of z three times, 2nd - two times, 3rd - two times
+
+## mapply() operates on multiple lists; multivariate apply
+m <- matrix(c(rep(1,4), rep(2,4), rep(3,4), rep(4,4)),4,4); m
+m1 <- mapply(rep, 1:4, 4); m1
+mapply(sum, 1:4, 1:4, 1:4) # sum up the 1st elements of vectors, then the 2nd elements etc...
+```
+
+Section 10. Aggregate and Table Command
+
+```{r s10}
+
+
+```
+
+Section 11. Data Manipulation in R
+
+```{r s11}
+
+
+```
+
+Section 12. Summarising the data graphically
+
+```{r s12}
+
+
+```
+
+Section 13. GGplot - GRaphical Analysis
+
+```{r s13}
+
+
+```
+
+Section 14. Simple Linear Regression
+
+```{r s14}
+
+
+```
+
+Section 15. Multi-Linear Regression
+
+```{r s15}
+
+
+```
+
+
+
