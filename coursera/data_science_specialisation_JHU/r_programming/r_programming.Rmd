@@ -1,0 +1,1066 @@
+---
+title: "R programming"
+author: "Evgeniia Golovina"
+date: "24/02/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, results="hide")
+```
+
+## R Programming course (Coursera)
+
+Week 1
+
+```{r week_1}
+setwd(paste0(getwd(), "/coursera/data_science_specialisation_JHU/r_programming"))
+dir() # to list all the files in the working directory
+ls() # to list all environment objects
+
+empty_vector <- vector()
+attributes() # to get attributes for R object
+c() # to create vectors
+x <- 9:29 # vector of integers
+x <- c(1+0i, 2+4i) # vector of complex
+
+x <- 1:6
+class(x) # integer
+as.numeric(x) # explicit coercion
+as.logical(x) # explicit coercion
+as.character(x) # explicit coercion
+
+x <- list("a", 1, F)
+m <- matrix(nrow = 2, ncol = 3); m # empty matrix
+dim(m)
+attributes(m)
+m <- matrix(1:6, nrow = 2, ncol = 3); m # matrices are constructed column-wise
+m <- 1:10; dim(m) <- c(2, 5); m # create a matrix from a vector by adding a dimension atrribute
+
+x <- 1:3; y <- 10:12
+cbind(x, y) # create a matrix by column-binding
+rbind(x, y) # create a matrix by row-binding
+
+x <- factor(c("yes", "no", "yes", "no", "no")) # create a factor with two levels: yes and no
+table(x)
+unclass(x)
+x <- factor(c("yes", "no", "yes", "no", "no"),
+            levels = c("yes", "no")) # to set the order of the levels
+
+is.na() # to test object if they are NA
+is.nan() # to test for NaN
+x <- c(1, 2, NaN, NA, 4)
+is.na(x); is.nan(x)
+
+dta.frame(); read.table(); read.csv() # to create a data frame
+data.matrix() # to convert dataframe to a matrix
+x <- data.frame(foo = 1:4, bar = c(T, T, F, F)); x # foo and bar are column names
+nrow(x); ncol(x)
+
+x <- 1:3
+names(x); names(x) <- c("a", "b", "c"); x; names(x)
+x <- list(a = 1, b = 2, c = 3); names(x)
+m <- matrix(1:4, nrow = 2, ncol = 2); dimnames(m) <- list(c("a", "b"), c("c", "d")); m
+
+read.table(); read.csv() # to read tabular data
+readLines() # ro read lines of a text file
+source() # to read in R code files (inverse of dump())
+dget() # to read in R code files (inverse of dput())
+load() # to read in saved workspaces
+unserialize() # to read single R objects in binary form
+
+write.table()
+writeLines()
+dump()
+dput()
+save()
+serialize()
+
+y <- data.frame(a = 1, b = "c"); dput(y)
+dput(y, file = "y.R"); new.y <- dget("y.R"); new.y # to save the object to  y.R file and read it later
+
+x <- "foo"; y <- data.frame(a = 1, b = "a")
+dump(c("x", "y"), file = "data.R"); rm(x, y); source("data.R")
+
+# Connections interfaces to the outside world
+file() # opens a connection to a file
+gzfile() # opens a connection to a file compressed with gzip
+bzfile() # opens a connection to a file compressed with bzip2
+url() # opens a connection to a webpage
+
+str(file)
+con <- file("foo.txt", "r"); data <- read.csv(con); close(con)
+data <- read.csv("foo.txt") # the same to previous line
+con <- gzfile("foo.gz"); x <- readLines(con, 10) # con is usefult when reading part of the file
+
+# Subsetting
+# [ always returns a subset of the same class as original
+# [[ used to subset elements of the list or data frame
+# $ is used to extrcat elements of the list or data frame by name
+x <- c("a", "b", "c"); x[1]; x[1:2]; x[x > "a"]
+u <- x > "a"; u; x[u]
+
+x <- list(foo = 1:4, bar = 0.6); x[1] # a list of [1, 2, 3, 4]
+x[[1]] # a sequense 1,2,3,4
+x$bar; x[["bar"]] # these two are the same
+x["bar"] # returns a list with element 0.6 (bar)
+x <- list(foo = 1:4, bar = 0.6, baz = "hello"); x[c(1, 3)] # to extract multimple elements of a list
+# [[ can be used with computed indices
+name <- "foo"; x[[name]]; x$name; x$foo # $ can use only literal names e.g. foo
+x[[c(1,3)]]; x[[1]][[3]] # the third element in the first element of the list
+
+x <- matrix(1:6, 2, 3); x[1,2] # first - row index, the second - column
+x[1, ]; x[, 2]
+x[1, 2] # returns a vector of length 1, by default it drops the dimension (e.g. matrix)
+x[1, 2, drop = FALSE] # returns a matrix 1x1
+
+# Partial matching of names is allowed with [[ nd $
+x <- list(aardvar = 1:6); x$a
+x[["a"]]; x[["a", exact = FALSE]]
+
+# Removing NAs
+x <- c(1, 2, NA, 3, NA, 4); bad <- is.na(x); bad; x[!bad]
+y <- c("a", "b", NA, "c", NA)
+good <- complete.cases(x, y); good; x[good]; y[good] # to subset from multiple things with NAs
+airquality[1:6, ]
+good <- complete.cases(airquality); airquality[good, ][1:6, ] # to remove all rows with NAs
+
+# Vecorized operations
+x <- 1:4; y <- 6:9
+x + y; x > 2; y == 8; x * y
+
+x <- matrix(1:4, 2, 2); y <- matrix(rep(10,4), 2, 2)
+x * y # element-wise multiplication
+x %*% y # true matrix multiplication
+
+# swirl = statistics with interactive R learning
+install.packages("swirl")
+packageVersion("swirl") # ‘2.4.5’
+library(swirl)
+rm(list=ls()) # to slear the workspace
+install_from_swirl("R Programming")
+swirl() # to start swirl
+```
+
+Week 2
+
+```{r week_2}
+# Control structures: if, else; for; while; repeat; break; next; return
+# if, else
+x <- 1
+if(x > 3) {
+  y <- 10
+} else {
+  y <- 0
+}
+
+y <- if(x > 3) {
+  10
+} else if(x == 0) {
+  5
+} else {
+  0
+}
+
+# For loops
+for(i in 1:10) {
+  print(i)
+}
+
+x <- c("a", "b", "c", "d")
+for(i in 1:4) {
+  print(x[i])
+}
+for(i in seq_along(x)) {
+  print(x[i])
+}
+for(letter in x) {
+  print(letter)
+}
+for(i in 1:4) print(x[i]) # the compact style
+
+# for loops can be nested, But! Nesting beyond 2-3 levels is very difficult to read/understand
+x <- matrix(1:6, 2, 3)
+for(i in seq_len(nrow(x))) {
+  for(j in seq_len(ncol(x))) {
+    print(x[i, j])
+  }
+}
+
+# While loops
+count <- 0
+while(count < 5) {
+  print(count)
+  count <- count + 1
+}
+
+z <- 5
+while(z >= 3 %% z <= 10) {
+  print(z)
+  coin <- rbinom(1, 1, 0.5)
+  if(coin == 1) { # random walk
+    z <- z + 1
+  } else {
+    z <- z - 1
+  }
+}
+
+# repeat initiates an infinite loop; to ext the repeat loop use break!
+x0 <- 1; tol <- 1e-8
+repeat{
+  x1 <- computeEstimate()
+  if(abs(x1 - x0) < tol) {
+    break
+  } else {
+    x0 <- x1
+  }
+}
+
+# next structure
+for(i in 1:100) {
+  if(i <= 20) {
+    next # skip the first 20 iterations
+  } # do something
+}
+
+# R functions
+add2 <- function(x, y) {
+  x + y
+}
+add2(3, 5)
+
+above10 <- function(x) {
+  use <- x > 10
+  x[use]
+}
+
+above <- function(x, n) {
+  use <- x > n
+  x[use]
+}
+x <- 1:20; above(x, 3)
+
+columnMean <- function(x, removeNA = TRUE) {
+  means <- numeric(ncol(x))
+  for(i in 1:ncol(x)) {
+    means[i] <- mean(x[, i], na.rm = removeNA)
+  }
+  means
+}
+x <- matrix(1:6, 2, 3); columnMean(x); columnMean(airquality); columnMean(airquality, FALSE)
+
+formals(columnMean) # returns all the formal arguments of the fucntion
+args(lm)
+
+# lazy evaluation: the argumants are evaluated only as eeded
+f <- function(a, b = 1, c = 2, d = NULL) {
+  a*2
+}
+f(2)
+
+myplot <- function(x, y, type = "1", ...) {
+  plot(x, y, type = type, ...)
+}
+
+args(paste)
+args(cat)
+
+# Scoping rules
+search() # to get the search list
+f <- function(x, y) {
+  x*2 + y/z # z is a free variable (not a formal argument, not a local variable)
+}
+
+make.power <- function(n){
+  pow <- function(x){
+    x^n
+  }
+  pow
+}
+cube <- make.power(3)
+square <- make.power(2)
+cube(3)
+square(3)
+ls(environment(cube)) # to check what's in the function's environment
+get("n", environment(cube))
+
+y <- 10
+f <- function(x) {
+  y <- 2
+  y^2 + g(x)
+}
+g <- function(x) {
+  x*y
+}
+f(3)
+
+# Optimization routines: optim, nlm and optimize
+# a constructor function - maximaxing the normal likelihood
+make.NegLogLik <- function(data, fixed=c(FALSE, FALSE)){
+  params <- fixed
+  function(p){
+    params[!fixed] <- p
+    mu <- params[1]
+    sigma <- params[2]
+    a <- -0.5*length(data)*log(2*pi*sigma^2)
+    b <- -0.5*sum((data-mu)^2)/(sigma^2)
+    -(a+b)
+  }
+}
+set.seed(1); normals <- rnorm(100,1,2)
+nLL <- make.NegLogLik(normals); nLL
+ls(environment(nLL))
+optim(c(mu = 0, sigma = 1), nLL)$par
+nLL <- make.NegLogLik(normals, c(FALSE, 2)) # fixing sigma to equal 2
+optimize(nLL, c(-1, 3))$minimum # estimating parameters
+nLL <- make.NegLogLik(normals, c(1, FALSE)) # fixing mu to equal 1
+optimize(nLL, c(1e-6, 10))$minimum # estimating parameters
+# ploting the likelihood
+nLL <- make.NegLogLik(normals, c(1, FALSE)) # fixing mu to equal 1
+x <- seq(1.7, 1.9, len = 100)
+y <- sapply(x, nLL)
+plot(x, exp(-(y - min(y))), type = "l")
+nLL <- make.NegLogLik(normals, c(FALSE, 2)) # fixing sigma to equal 2
+x <- seq(0.5, 1.5, len = 100)
+y <- sapply(x, nLL)
+plot(x, exp(-(y - min(y))), type = "l")
+
+# Dates and times
+Date() # class for dates; stored internally as the number of datses since 1970-01-01
+POSIXct(); POSIXlt() # class for times; staored internally as the number of seconds since 1970-01-01
+x <- as.Date("1970-01-01"); x
+unclass(x)
+unclass(as.Date("1970-01-02"))
+x <- Sys.time(); x # print current time
+p <- as.POSIXlt(x); p
+names(unclass(p)); p$sec
+unclass(x); x$sec # Error in x$sec : $ operator is invalid for atomic vectors
+
+datestring <- c("January 10, 2012 10:40", "December 9, 2011 11:40")
+x <- strptime(datestring, "%B %d, %Y %H:%M"); x; class(x)
+?strptime
+
+x <- as.Date("2012-01-01")
+y <- strptime("9 Jan 2011 11:34:45", "%d %b %Y %H:%M:%S"); y
+x - y # Error in x - y : non-numeric argument to binary operator
+x <- as.POSIXlt(x); x - y
+
+x <- as.Date("2012-03-01"); y <- as.Date("2012-02-28"); x - y
+x <- as.POSIXct("2012-10-25 01:00:00"); y <- as.POSIXct("2012-10-25 06:00:00", tz = "GMT"); y - x
+```
+
+Week 2 Quiz
+
+```{r week_2_quiz}
+# Q1 - The number 27 is returned
+cube <- function(x, n) {
+        x^3
+}
+cube(3)
+# Q2 - 'x' is a vector of length 10 and 'if' can only test a single logical statement.
+x <- 1:10
+if(x > 5) {
+  x <- 0
+}
+# Q3 - 10
+f <- function(x) {
+        g <- function(y) {
+                y + z
+        }
+        z <- 4
+        x + g(x)
+}
+z <- 10
+f(3)
+# Q4 - 10
+x <- 5
+y <- if(x < 3) {
+        NA
+} else {
+        10
+}
+# Q5 - f
+h <- function(x, y = NULL, d = 3L) {
+        z <- cbind(x, d)
+        if(!is.null(y))
+                z <- z + y
+        else
+                z <- z + f
+        g <- x + y / z
+        if(d == 3L)
+                return(g)
+        g <- g + 10
+        g
+}
+# Q6 - a collection of symbol/value pairs
+# Q7 - lexical scoping
+# Q8 - The values of free variables are searched for in the environment in which the function was defined
+# Q9 - All objects must be stored in memory
+# Q10 - parent frame - It is the environment in which a function was called
+```
+
+Programming Assignment 1
+
+```{r week_2_PA}
+# Part 1
+setwd(paste0(getwd(), "coursera/data_science_specialisation_JHU/r_programming/w2_pa_1/"))
+pollutantmean <- function(directory, pollutant, id){
+  files <- list.files(path=directory, pattern="*.csv", full.names=TRUE, recursive=FALSE)
+  ourfiles <- files[id]
+  rourfiles <- lapply(ourfiles, read.csv)
+  t <- c()
+  for(i in 1:length(rourfiles)){
+    n <- rourfiles[[i]][[pollutant]]
+    #print(length(n))
+    t <- c(t, n)
+    #print(length(t))
+  }
+  #print(length(t)) # 23739
+  mean(t, na.rm = TRUE)
+}
+
+pollutantmean("specdata", "sulfate", 1:10) # 4.064128
+pollutantmean("specdata", "nitrate", 70:72) # 1.706047
+pollutantmean("specdata", "nitrate", 23) # 1.280833
+
+directory <- "specdata"; pollutant <- "sulfate"; id <- 1:10
+files <- list.files(path=directory, pattern="*.csv", full.names=TRUE, recursive=FALSE)
+ourfiles <- files[id]; ourfiles
+rourfiles <- lapply(ourfiles, read.csv); rourfiles
+t <- c()
+for(i in 1:length(rourfiles)){
+    n <- rourfiles[[i]][[pollutant]]
+    t <- c(t, n)
+}; length(t)
+
+# Part 2
+directory <- "specdata"; id <- 1
+files <- list.files(path=directory, pattern="*.csv", full.names=TRUE, recursive=FALSE)
+ourfiles <- files[id]; ourfiles
+rourfiles <- lapply(ourfiles, read.csv); rourfiles; class(rourfiles)
+t <- c()
+#a <- rourfiles[[id]]
+#good <- complete.cases(a)
+#new <- a[good, ]; n <- nrow(new); t <- c(t, n)
+for(i in 1:length(rourfiles)){
+  a <- rourfiles[[i]]
+  good <- complete.cases(a)
+  new <- a[good, ]
+  n <- nrow(new)
+  t <- c(t, n)
+}
+df <- data.frame(id = 1:length(rourfiles), nobs = t); df
+
+complete <- function(directory, id){
+  files <- list.files(path=directory, pattern="*.csv", full.names=TRUE, recursive=FALSE)
+  ourfiles <- files[id]
+  rourfiles <- lapply(ourfiles, read.csv)
+  t <- c()
+  for(i in 1:length(rourfiles)){
+    a <- rourfiles[[i]]
+    good <- complete.cases(a)
+    new <- a[good, ]
+    n <- nrow(new)
+    t <- c(t, n)
+  }
+  data.frame(id = 1:length(rourfiles), nobs = t)
+}
+
+complete("specdata", 1)
+complete("specdata", c(2, 4, 8, 10, 12))
+complete("specdata", 30:25)
+complete("specdata", 3)
+
+# Part 3
+directory <- "specdata"; threshold <- 5000
+files <- list.files(path=directory, pattern="*.csv", full.names=TRUE, recursive=FALSE); length(files)
+ccases <- complete("specdata", 1:length(files))
+new_ccases <- ccases$nobs >= threshold
+n <- ccases[new_ccases, ]
+l <- dim(n)
+correls <- c()
+if(l[1] == 0){
+  print("Data frame is empty!")
+  correls <- numeric()
+  correls
+} else {
+  print("Data frame is not empty!")
+  v <- n[[1]]
+  ourfiles <- files[v]
+  rourfiles <- lapply(ourfiles, read.csv)
+    for(i in 1:length(rourfiles)){
+    a <- rourfiles[[i]]
+    good <- complete.cases(a)
+    new <- a[good, ]
+    m <- data.matrix(data.frame(sulfate = new$sulfate, nitrate = new$nitrate))
+    c <- cor(m)
+    correls <- c(correls, c[1,2])
+  }
+}
+
+?cor
+
+
+corr <- function(directory, threshold = 0){
+  files <- list.files(path=directory, pattern="*.csv", full.names=TRUE, recursive=FALSE)
+  ccases <- complete(directory, 1:length(files))
+  new_ccases <- ccases$nobs >= threshold
+  n <- ccases[new_ccases, ]
+  l <- dim(n)
+  correls <- c()
+  if(l[1] == 0) {
+    print("Data frame is empty!")
+    correls <- numeric()
+    correls
+  } else {
+    v <- n[[1]]
+    ourfiles <- files[v]
+    rourfiles <- lapply(ourfiles, read.csv)
+    for(i in 1:length(rourfiles)){
+      a <- rourfiles[[i]]
+      good <- complete.cases(a)
+      new <- a[good, ]
+      m <- data.matrix(data.frame(sulfate = new$sulfate, nitrate = new$nitrate))
+      c <- cor(m)
+      correls <- c(correls, c[1,2])
+    }
+    correls
+  }
+}
+
+cr <- corr("specdata", 150)
+head(cr)
+summary(cr)
+
+cr <- corr("specdata", 400)
+head(cr)
+summary(cr)
+
+cr <- corr("specdata", 5000)
+summary(cr)
+length(cr)
+
+cr <- corr("specdata")
+summary(cr)
+length(cr)
+
+#PA1 Q1
+round(pollutantmean("specdata", "sulfate", 1:10), 3) # 4.064
+#PA1 Q2
+round(pollutantmean("specdata", "nitrate", 70:72), 3) # 1.706
+#PA1 Q3
+round(pollutantmean("specdata", "sulfate", 34), 3) # 1.477
+#PA1 Q4
+round(pollutantmean("specdata", "nitrate"), 3) # 1.703
+#PA1 Q5
+cc <- complete("specdata", c(6, 10, 20, 34, 100, 200, 310))
+print(cc$nobs)
+#PA1 Q6 - 219
+cc <- complete("specdata", 54)
+print(cc$nobs)
+#PA1 Q7 - 711 135  74 445 178  73  49   0 687 237
+vstr <- "3.5.1"
+RNGversion(vstr)
+set.seed(42)
+cc <- complete("specdata", 332:1)
+use <- sample(332, 10)
+print(cc[use, "nobs"])
+#PA1 Q8 - [1]  0.2688  0.1127 -0.0085  0.4586  0.0447
+vstr <- "3.5.1"
+RNGversion(vstr)
+cr <- corr("specdata")                
+cr <- sort(cr)                
+set.seed(868)                
+out <- round(cr[sample(length(cr), 5)], 4)
+print(out)
+#PA1 Q9 - [1] 243.0000   0.2540   0.0504  -0.1462  -0.1680   0.5969
+vstr <- "3.5.1"
+RNGversion(vstr)
+cr <- corr("specdata", 129)                
+cr <- sort(cr)                
+n <- length(cr)                
+set.seed(197)                
+out <- c(n, round(cr[sample(n, 5)], 4))
+print(out)
+#PA1 Q10 - [1]  0.0000 -0.0190  0.0419  0.1901
+cr <- corr("specdata", 2000)                
+n <- length(cr)                
+cr <- corr("specdata", 1000)                
+cr <- sort(cr)
+print(c(n, round(cr, 4)))
+```
+
+Week 3
+
+```{r week_3}
+## Week 3 - Loop functions and debugging
+lapply() # to loop over a list and evaluate a function on each element
+sapply() # -//-// but try to simplify the result
+apply() # to apply function over the margins of an array
+tapply() # to apply a function over subsets of a vector
+mapply() # multivariate version of laaply
+
+# lapply always returns a list
+l <- list(a = 1:5, b = rnorm(10))
+f <- function(x) x+1
+lf <- lapply(l, f); lf
+lmean <- lapply(l, mean); lmean # a list is returned
+x <- 1:4; lapply(x, runif) # to generate uniform random variables using randon number generator: it generates one, two, three and four random variables
+x <- 1:4; lapply(x, runif, min=0, max=10)
+
+# Apply anonymous functions
+x <- list(a = matrix(1:4, 2, 2), b = matrix(1:6, 3, 2)); x
+lapply(x, function(elt) elt[,1]) # to extract the first column of each matrix
+
+# sapply
+l <- list(a = 1:5, b = rnorm(10))
+smean <- sapply(l, mean); smean # a vector is returned
+
+# apply
+str(apply)
+x <- matrix(rnorm(200), 20, 10); x # 20 rows and 10 columns
+apply(x, 2, mean) # to calculate the mean of each colum (second dimension) in the matrix; vector
+apply(x, 1, sum) # to calculate the summ of each row (first dimension) in the matrix; vector
+#col/row sums and means general functions
+rowSums = apply(x, 1, sum)
+rowMeans = apply(x, 1, mean)
+colSums = apply(x, 2, sum)
+colMeans = apply(x, 2, mean)
+# using the ... argument, passing the 25% and 75%
+apply(x, 1, quantile, probs = c(0.25, 0.75))
+# To average matrix in an array
+a <- array(rnorm(2 * 2 * 10), c(2, 2, 10)); a
+apply(a, c(1, 2), mean)
+rowMeans(a, dims = 2)
+
+# mapply
+str(mapply)
+x <- list(rep(1,4), rep(2, 3), rep(3, 2), rep(4, 1)); x
+mapply(rep, 1:4, 4:1) # the same
+# vectorizing a function
+noise <- function(n, mean, sd){ # to generate random normal noise
+  rnorm(n, mean, sd)
+}
+noise(5, 1, 2)
+noise(1:5, 1:5, 2) # not really correct
+mapply(noise, 1:5, 1:5, 2)
+list(noise(1,1,2), noise(2,2,2), noise(3,3,2), noise(4,4,2), noise(5,5,2))
+
+# tapply
+str(tapply)
+x <- c(rnorm(10), runif(10), rnorm(10, 1)); x
+f <- gl(3, 10); f # craete a factor variable; three levels repeated 10 times
+tapply(x, f, mean, simplify = FALSE) # return a list
+tapply(x, f, mean, simplify = TRUE) # return a vector
+tapply(x, f, range)
+
+# split
+str(split)
+x <- c(rnorm(10), runif(10), rnorm(10, 1)); x
+f <- gl(3, 10); f
+spl <- split(x, f) # always returns a list back
+lapply(spl, mean); sapply(spl, mean)
+
+library(datasets)
+head(airquality)
+s <- split(airquality, airquality$Month)
+lapply(s, function(x) colMeans(x[, c("Ozone", "Solar.R", "Wind")]))
+sapply(s, function(x) colMeans(x[, c("Ozone", "Solar.R", "Wind")]))
+sapply(s, function(x) colMeans(x[, c("Ozone", "Solar.R", "Wind")], na.rm = TRUE))
+x <- rnorm(10); f1 <- gl(2, 5); f2 <- gl(5, 2); f1; f2; interaction(f1, f2)
+str(split(x, list(f1, f2))) # there are empty levels
+str(split(x, list(f1, f2), drop = TRUE)) # get rid of empty levels
+
+# Debugging functions
+str(traceback)
+str(debug)
+str(browser)
+str(trace)
+str(recover)
+
+mean(k)
+traceback() # call it right after the error occured
+lm(k ~ x)
+traceback()
+
+debug(lm)
+lm(k ~ x)
+
+options(error = recover)
+read.csv("nosuchfile")
+```
+
+Week 3 Quiz
+
+```{r week_3_quiz}
+# Q1
+library(datasets)
+data(iris)
+?iris
+head(iris)
+s <- split(iris, iris$Species)
+sapply(s, function(x) colMeans(x[, c("Sepal.Length", "Sepal.Width")], na.rm = TRUE))
+round(6.588, 0) # 7
+# Q2
+apply(iris[, 1:4], 2, mean)
+# Q3
+library(datasets)
+data(mtcars)
+head(mtcars)
+?mtcars
+tapply(mtcars$mpg, mtcars$cyl, mean) # yes
+with(mtcars, tapply(mpg, cyl, mean)) # yes
+sapply(split(mtcars$mpg, mtcars$cyl), mean) # yes
+# Q4
+s <- sapply(split(mtcars$hp, mtcars$cyl), mean); s
+round(s[1] - s[3], 0) # absolute differenc ewill be 127
+# Q5
+debug(ls); ls()
+
+#PA1 Q1
+makeVector <- function(x = numeric()) {
+        m <- NULL
+        set <- function(y) {
+                x <<- y
+                m <<- NULL
+        }
+        get <- function() x
+        setmean <- function(mean) m <<- mean
+        getmean <- function() m
+        list(set = set, get = get,
+             setmean = setmean,
+             getmean = getmean)
+}
+
+cachemean <- function(x, ...) {
+        m <- x$getmean()
+        if(!is.null(m)) {
+                message("getting cached data")
+                return(m)
+        }
+        data <- x$get()
+        m <- mean(data, ...)
+        x$setmean(m)
+        m
+}
+
+test <- makeVector(c(2,4,6,8))
+test <- makeVector(rnorm(100))
+test$getmean()
+# returns NULL because R discards the object when the function has finished
+cachemean(test)
+test$getmean()
+cachemean(makeVector(1:6))
+```
+
+Week 4 - Simulation and Profiling
+
+```{r week_4}
+# The str function
+str(str) # an alternative to summary(); to compactly display the internal structure of an R object
+x <- rnorm(100, 2, 4); summary(x); str(x)
+
+# Generating random numbers
+rnorm(100, 2, 4)
+str(dnorm); str(pnorm); str(rpois)
+str(dnorm); str(pnorm); str(qnorm); str(rnorm) # d - density; r - random number generation; p cumulative distribution; q - quantile function
+set.seed(1) # set the random number seed to ensure reproducibility
+
+# Simulating a linear model
+set.seed(20)
+x <- rnorm(100); e <- rnorm(100, 0, 2)
+y <- 0.5 + 2 * x + e; summary(y); plot(x,y)
+# what if a is binary?
+set.seed(10)
+x <- rbinom(100, 1, 0.5) # generate binomary distribution
+e <- rnorm(100, 0, 2)
+y <- 0.5 + 2 * x + e; summary(y); plot(x,y)
+# Generating random numbers from a Generalized Linear Model
+set.seed(1)
+x <- rnorm(100); log.mu <- 0.5 + 0.3 * x
+y <- rpois(100, exp(log.mu)); summary(y); plot(x,y) # a Poisson model
+
+# Random sampling
+str(sample) # randomly sample from arbitrary distributions
+set.seed(1)
+sample(1:10, 4)
+sample(letters, 5)
+sample(1:10) # permutation
+sample(1:10, replace = TRUE) # sample with replacement
+
+# R profiler
+str(system.time) # to compute the time needed to execute the expression
+system.time(ls)
+# Rprof
+str(Rprof)
+summaryRprof() # Don't use system.time() and Rprof together!!!
+```
+
+Week 4 Quiz
+
+```{r week_4_quiz}
+# Q1 - [1] 1 1 2 4 1
+set.seed(1)
+rpois(5, 2)
+# Q2 - rnorm
+# Q3 - It ensures that the sequence of random numbers starts in a specific place and is therefore reproducible. It can be used to specify which random number generating algorithm R should use, ensuring consistency and reproducibility.
+# Q4 - qpois
+# Q5 - Generate data from a Normal linear model
+set.seed(10)
+x <- rep(0:1, each = 5)
+e <- rnorm(10, 0, 20)
+y <- 0.5 + 2 * x + e
+# Q6 - rbinom
+# Q7 - the function call stack
+# Q8 - 100%
+library(datasets)
+Rprof()
+fit <- lm(y ~ x1 + x2)
+Rprof(NULL)
+# Q9 - It is the time spent by the CPU evaluating an expression
+# Q10 - elapsed time may be smaller than user time
+```
+
+Week 4 programming assignment
+
+```{r week_4_PA}
+setwd(paste0(getwd(), "/coursera/data_science_specialisation_JHU/r_programming/w4_pa3/hospital_quality"))
+outcome <- read.csv("outcome-of-care-measures.csv", colClasses = "character")
+head(outcome)
+ncol(outcome); nrow(outcome); names(outcome)
+# Part 1 - Plot the 30-day mortality rates for heart attack
+outcome[, 11] <- as.numeric(outcome[, 11])
+hist(outcome[, 11])
+# Part 2 - Finding the best hospital in a state
+out <- read.csv("outcome-of-care-measures.csv")
+state <- "TX"; outcome <- "heart attack"
+states <- unique(out$State); states
+outcomes <- c("heart attack", "heart failure", "pneumonia"); outcomes
+if((state %in% states) && (outcome %in% outcomes)){
+  ## Return hospital name in that state with lowest 30-day death rate
+  new <- out[out$State == state, ]
+  if(outcome == "heart attack") {
+    ha <- new[ ,c(2, 13)]
+    ha[, 2] <- as.numeric(ha[, 2])
+    minha <- min(ha[, 2], na.rm = TRUE) # 8
+    ha[1][which(ha[, 2] == minha), ]
+  } else if(outcome == "heart failure"){
+    ha <- new[ ,c(2, 19)]
+    ha[, 2] <- as.numeric(ha[, 2])
+    minha <- min(ha[, 2], na.rm = TRUE) # 5.2
+    ha[1][which(ha[, 2] == minha), ]
+  } else if(outcome == "pneumonia"){
+    ha <- new[ ,c(2, 25)]
+    ha[, 2] <- as.numeric(ha[, 2])
+    minha <- min(ha[, 2], na.rm = TRUE)
+    ha[1][which(ha[, 2] == minha), ]
+  }
+} else if(!is.element(state, states)) {
+  stop("Error: invalid state")
+} else if(!is.element(outcome, outcomes)) {
+  stop("Error: invalid outcome")
+}
+
+best <- function(state, outcome) {
+  ## Read outcome data
+  out <- read.csv("outcome-of-care-measures.csv", colClasses = "character")
+  ## Check that state and outcome are valid
+  states <- unique(out$State)
+  outcomes <- c("heart attack", "heart failure", "pneumonia")
+  if((state %in% states) && (outcome %in% outcomes)) {
+    new <- out[out$State == state, ]
+    if(outcome == "heart attack") {
+      ha <- new[ ,c(2, 13)]
+      ha[, 2] <- as.numeric(ha[, 2])
+      minha <- min(ha[, 2], na.rm = TRUE) # 8
+      ha[1][which(ha[, 2] == minha), ]
+    } else if(outcome == "heart failure"){
+      ha <- new[ ,c(2, 19)]
+      ha[, 2] <- as.numeric(ha[, 2])
+      minha <- min(ha[, 2], na.rm = TRUE) # 5.2
+      ha[1][which(ha[, 2] == minha), ]
+    } else if(outcome == "pneumonia"){
+      ha <- new[ ,c(2, 25)]
+      ha[, 2] <- as.numeric(ha[, 2])
+      minha <- min(ha[, 2], na.rm = TRUE)
+      ha[1][which(ha[, 2] == minha), ]
+    }
+  } else if(!is.element(state, states)) {
+    stop("invalid state")
+  } else if(!is.element(outcome, outcomes)) {
+    stop("invalid outcome")
+  }
+}
+
+# Testing
+best("TX", "heart attack")
+best("TX", "heart failure")
+best("MD", "heart attack")
+best("MD", "pneumonia")
+best("BB", "heart attack")
+best("NY", "hert attack")
+
+# Part 3 - Ranking hospitals by outcome in a state
+state <- "WI"; outcome <- "pneumonia"; num <- 3
+out <- read.csv("outcome-of-care-measures.csv", colClasses = "character")
+new <- out[out$State == state, ]
+#ne <- new[, c(2, 23)]
+#ne[, 2] <- as.numeric(new[, 2])
+#new[, 11] <- as.numeric(new[, 11])
+#new[, 17] <- as.numeric(new[, 17])
+#new[, 23] <- as.numeric(new[, 23])
+n <- new[, c(2, 11, 17, 23)]
+n[, 2] <- as.numeric(n[, 2])
+n[, 3] <- as.numeric(n[, 3])
+n[, 4] <- as.numeric(n[, 4])
+p <- n[ ,c(1, 4)]
+good <- complete.cases(p)
+new <- p[good, ]
+new$rank <- NA
+num
+#ha <- new[ ,c(1, 4, 5)]
+#ha[, 2] <- as.numeric(ha[, 2])
+#d <- ha[order(ha[,2], ha[,1]),]
+ordered_scores <- order(ha[,2], ha[,1])
+#ordered_scores <- order(ha[, 2])
+ha$rank[ordered_scores] <- 1:nrow(ha)
+ha[1][which(ha[, 3] == num), ]
+
+
+rankhospital <- function(state, outcome, num = "best") {
+  ## Read outcome data
+  out <- read.csv("outcome-of-care-measures.csv", colClasses = "character")
+  ## Check that state and outcome are valid
+  states <- unique(out$State)
+  outcomes <- c("heart attack", "heart failure", "pneumonia")
+  if((state %in% states) && (outcome %in% outcomes)){
+    ## Return hospital name in that state with the given rank 30-day death rate
+    new <- out[out$State == state, ]
+    n <- new[, c(2, 11, 17, 23)]
+    n[, 2] <- as.numeric(n[, 2])
+    n[, 3] <- as.numeric(n[, 3])
+    n[, 4] <- as.numeric(n[, 4])
+    if(outcome == "heart attack"){
+      ha <- n[ ,c(1, 2)]
+      good <- complete.cases(ha)
+      new <- ha[good, ]
+      new$rank <- NA
+      ordered_scores <- order(new[,2], new[,1])
+      new$rank[ordered_scores] <- 1:nrow(new)
+      if(num == "best"){
+        new[1][which(new[, 3] == 1), ]
+      } else if(num =="worst"){
+        new[1][which(new[, 3] == tail(nrow(new), n=1)), ]
+      } else if(num > nrow(new)){
+        return(NA)
+      } else{
+        new[1][which(new[, 3] == num), ]
+      }
+    } else if(outcome == "heart failure"){
+      ha <- n[ ,c(1, 3)]
+      good <- complete.cases(ha)
+      new <- ha[good, ]
+      new$rank <- NA
+      ordered_scores <- order(new[,2], new[,1])
+      new$rank[ordered_scores] <- 1:nrow(new)
+      if(num == "best"){
+        new[1][which(new[, 3] == 1), ]
+      } else if(num =="worst"){
+        new[1][which(new[, 3] == tail(nrow(new), n=1)), ]
+      } else if(num > nrow(new)){
+        return(NA)
+      } else {
+        new[1][which(new[, 3] == num), ]
+      }
+    } else if(outcome == "pneumonia"){
+      ha <- n[ ,c(1, 4)]
+      good <- complete.cases(ha)
+      new <- ha[good, ]
+      new$rank <- NA
+      ordered_scores <- order(new[,2], new[,1])
+      new$rank[ordered_scores] <- 1:nrow(new)
+      if(num == "best"){
+        new[1][which(new[, 3] == 1), ]
+      } else if(num =="worst"){
+        new[1][which(new[, 3] == tail(nrow(new), n=1)), ]
+      } else if(num > nrow(new)){
+        return(NA)
+      } else {
+        new[1][which(new[, 3] == num), ]
+      }
+    }
+  } else if(!is.element(state, states)){
+    stop("invalid state")
+  } else if(!is.element(outcome, outcomes)){
+    stop("invalid outcome")
+  }
+}
+
+# Testing
+rankhospital("TX", "heart failure", 4)
+rankhospital("MD", "heart attack", "worst")
+rankhospital("MN", "heart attack", 5000)
+rankhospital("AL", "heart attack", 20) #  D W MCMILLAN MEMORIAL HOSPITAL
+rankhospital("WI", "pneumonia", "worst") #  MAYO CLINIC HEALTH SYSTEM - NORTHLAND, INC
+
+# Part 4 - Ranking hospitals in all states
+library(tidyverse)
+out <- read.csv("outcome-of-care-measures.csv")
+outcome <- "heart attack"; num <- 20
+states <- unique(out$State)
+for(state in 1:length(states)){
+  rankhospital(state, outcome, num)
+}
+
+
+rankall <- function(outcome, num = "best") {
+  ## Read outcome data
+  out <- read.csv("outcome-of-care-measures.csv")
+  ## Check that state and outcome are valid
+  states <- unique(out$State)
+  outcomes <- c("heart attack", "heart failure", "pneumonia")
+  df <- data.frame(hospital=c(), state=c())
+  if(outcome %in% outcomes){
+    ## For each state, find the hospital of the given rank
+    for(i in 1:length(states)){
+      o <- rankhospital(states[i], outcome, num)
+      l <- list(hospital=o, state=states[i])
+      df <- rbind(df, l)
+      #print(class(l))
+    }
+  ## Return a data frame with the hospital names and the (abbreviated) state name
+  df[order(df[,2]),]
+  } else if(!is.element(outcome, outcomes)){
+    stop("invalid outcome")
+  }
+}
+
+# Testing
+head(rankall("heart attack", 20), 10)
+tail(rankall("pneumonia", "worst"), 3)
+tail(rankall("heart failure"), 10)
+
+#PA3 Q1
+best("SC", "heart attack") # "MUSC MEDICAL CENTER"
+# PA3 Q2
+best("NY", "pneumonia") # "MAIMONIDES MEDICAL CENTER"
+# PA3 Q3
+best("AK", "pneumonia") # "YUKON KUSKOKWIM DELTA REG HOSPITAL"
+# PA3 Q4
+rankhospital("NC", "heart attack", "worst") # "WAYNE MEMORIAL HOSPITAL"
+# PA3 Q5
+rankhospital("WA", "heart attack", 7) # "YAKIMA VALLEY MEMORIAL HOSPITAL"
+# PA3 Q6
+rankhospital("TX", "pneumonia", 10) # "SETON SMITHVILLE REGIONAL HOSPITAL"
+# PA3 Q7
+rankhospital("NY", "heart attack", 7) # "BELLEVUE HOSPITAL CENTER"
+# PA3 Q8
+r <- rankall("heart attack", 4)
+as.character(subset(r, state == "HI")$hospital) # "CASTLE MEDICAL CENTER"
+# PA3 Q9
+r <- rankall("pneumonia", "worst")
+as.character(subset(r, state == "NJ")$hospital) # "BERGEN REGIONAL MEDICAL CENTER"
+# PA3 Q10
+r <- rankall("heart failure", 10)
+as.character(subset(r, state == "NV")$hospital) # "RENOWN SOUTH MEADOWS MEDICAL CENTER"
+```

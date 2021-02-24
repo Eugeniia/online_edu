@@ -1,0 +1,49 @@
+---
+title: "Statistical Inference"
+author: "Evgeniia Golovina"
+date: "24/02/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, results="hide")
+```
+
+## Statistical Inference course (Coursera)
+
+Week 1 Quiz
+
+```{r week_1_quiz}
+# Q1 - 11%
+# Q2 - 0.75
+# Q3 - p/(1-p) = Y/X
+# Q4 - The median must be 0
+# Q5 - 3
+# Q6 - 40%
+```
+
+Week 2 Quiz
+
+```{r week_2_quiz}
+# Q1 - σ^2/n
+# Q2 - How many sds below the mean 70 is? (70-80)/10 = -1;pnorm(-1) = ~16%
+# Q3 - qnorm(.95, mean = 1100, sd = 75) = ~1223
+# Q4 - qnorm(0.95, mean = 1100, sd = 75/sqrt(100)) ~1112
+# Q5 - pbinom(3, size = 5, prob = 0.5, lower.tail = FALSE) 0.1875
+# Q6 - pnorm(16, mean = 15, sd = 1) - pnorm(14, mean = 15, sd = 1) 0.6827
+# Q7 - According to the LLN it should be near .5
+# Q8 - ppois(10, lambda = 5*3) 0.1185
+```
+
+Week 3 Quiz
+
+```{r week_3_quiz}
+# Q1 - 
+# Q2 - 
+# Q3 - 
+# Q4 - 
+# Q5 - 
+# Q6 - 
+# Q7 - 
+# Q8 - 
+```

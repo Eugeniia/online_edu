@@ -1,0 +1,42 @@
+---
+title: "Data SCientist's Toolbox"
+author: "Evgeniia Golovina"
+date: "24/02/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, results="hide")
+```
+
+## The Data Scientist’s Toolbox course (Coursera)
+
+```{r notes, echo=FALSE}
+# installing from CRAN
+install.packages("ggplot2")
+install.packages(c("ggplot2", "devtools", "lme4"))
+
+# installing from BioConductor
+source("https://bioconductor.org/biocLite.R") # to get the basic functions required to install through BioConductor
+biocLite("GenomicFeatures")
+
+# installing from GitHub
+install.packages("devtools")
+library(devtools)
+install_github("author/package")
+
+library(ggplot2) # to load the package
+installed.packages() # what packages are installed?
+library() # what packages are installed?
+old.packages() # what packages need an update?
+update.packages() # to update all packages
+install.packages("packagename")
+detach("package:ggplot2", unload=TRUE) # to unload the package
+remove.packages("ggplot2") # to remove the package
+
+version() # to get R version
+sessionInfo() # to get R version along with a listing of all of the packages you have loaded
+
+help(package = "ggplot2")
+browseVignettes("ggplot2") # to get extra help info
+```

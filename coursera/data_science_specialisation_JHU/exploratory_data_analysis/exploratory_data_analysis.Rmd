@@ -1,0 +1,576 @@
+---
+title: "Exploratory Data Analysis"
+author: "Evgeniia Golovina"
+date: "24/02/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, results="hide")
+```
+
+## Exploratory Data Analysis course (Coursera)
+
+Week 1
+
+```{r week_1, echo=FALSE}
+# L1 Graphs
+# Principles of Analytic Graphics
+setwd(paste0(getwd(), "/coursera/data_science_specialisation_JHU/exploratory_data_analysis"))
+pollution <- read.csv("./file.csv", colClasses = c("numeric", "character", "factor", "numeric"))
+head(pollution)
+fileURL <- "https://d396qusza40orc.cloudfront.net/getdata%2Fdata%2Fss06pid.csv"
+download.file(fileURL, destfile = "./w1/acs.csv", method = "curl")
+acs <- read.csv("./w1/acs.csv"); head(acs,3)
+# five-number summary
+summary(acs$pwgtp80)
+# boxplot
+boxplot(acs$pwgtp80, col = "blue")
+abline(h = 200, lwd = 2) # overlying features: 200 could be a standard number, smth you sompared with
+# histogram
+hist(acs$pwgtp80, col = "green", breaks = 100) # play around with the breaks
+rug(acs$pwgtp80) # add a Rug (all the points) to a plot
+abline(v = median(acs$pwgtp80), col = "magenta", lwd = 4) # v - for vertical line
+# barplot
+barplot(table(acs$PUMA), col = "wheat", main = "Number of observations in each PUMA")
+# multiple boxplots
+boxplot(acs$pwgtp80 ~ acs$PUMA, data = acs, col = "red")
+# multiple histograms
+par(mfrow=c(2,1), mar = c(4,4,2,1))
+hist(subset(acs, PUMA == 100)$pwgtp80, col = "green")
+hist(subset(acs, PUMA == 200)$pwgtp80, col = "green")
+# scatterplot
+with(acs, plot(CIT, pwgtp80, col = PUMA)) # add color
+abline(h = 200, lwd = 2, lty = 2)
+# multiple scatterplots
+par(mfrow=c(2,1), mar = c(4,4,2,1))
+with(subset(acs, PUMA == 100), plot(CIT, pwgtp80, main = "PUMA 100"))
+with(subset(acs, PUMA == 200), plot(CIT, pwgtp80, main = "PUMA 200"))
+
+# L2 Plotting
+# The base plotting system (the oldest one)
+library(datasets)
+data(cars)
+with(cars, plot(speed, dist))
+# The Lattice system
+library(lattice)
+state <- data.frame(state.x77, region = state.region)
+xyplot(Life.Exp ~ Income | region, data = state, layout = c(4,1))
+# The ggplot system
+library(ggplot2)
+data(mpg)
+qplot(displ, hwy, data = mpg)
+# The base plotting system
+library(datasets)
+hist(airquality$Ozone)
+with(airquality, plot(Wind, Ozone)); title(main = "Ozone and Wind in New York City")
+with(airquality, plot(Wind, Ozone, main = "Ozone and Wind in New York City"))
+with(subset(airquality, Month == 5), points(Wind, Ozone, col = "blue"))
+airquality <- transform(airquality, Month = factor(Month))
+boxplot(Ozone ~ Month, airquality, xlab = "Month", ylab = "Ozone (ppb)")
+par("lty"); par("col")
+par("mar") # 5.1 - bottom (first), 4.1 - left-hand side (second), 4.1 - top (third), 2.1 - right-hand side (fourth). Clock-wise direction. 5.1 means 5.1 lines of text
+# Base plot with annotation
+with(airquality, plot(Wind, Ozone, main = "Ozone and Wind in New York City", type = "n")) # set everything but to not plot anything
+with(subset(airquality, Month == 5), points(Wind, Ozone, col = "blue"))
+with(subset(airquality, Month != 5), points(Wind, Ozone, col = "red"))
+legend("topright", pch = 1, col = c("blue", "red"), legend = c("May", "Other months"))
+# Base plot with regression line
+with(airquality, plot(Wind, Ozone, main = "Ozone and Wind in New York City", pch = 20))
+model <- lm(Ozone ~ Wind, airquality)
+abline(model, lwd = 2)
+# Multiple base plots
+par(mfrow=c(1,2)) # one row, two columns
+with(airquality, {
+  plot(Wind, Ozone, main = "Ozone and Wind")
+  plot(Solar.R, Ozone, main = "Ozone and Solar Radiation")
+})
+# Multiple base plots
+par(mfrow=c(1,3), mar=c(4,4,2,1), oma=c(0,0,2,0))
+with(airquality, {
+  plot(Wind, Ozone, main = "Ozone and Wind")
+  plot(Solar.R, Ozone, main = "Ozone and Solar Radiation")
+  plot(Temp, Ozone, main = "Ozone and Temperature")
+  mtext("Ozone and Weather in New York City", outer = TRUE)
+})
+# Demo
+x <- rnorm(100)
+hist(x)
+y <- rnorm(100)
+plot(x, y)
+par(mar=c(2,2,2,2)); plot(x, y)
+par(mar=c(4,4,2,2)); plot(x, y)
+example(points) # check the pch type
+x <- rnorm(100); y <- rnorm(100)
+plot(x, y, pch=20)
+title("Scatterplot")
+text(-2,-2, "label")
+legend("topleft", legend = "Data", pch=20)
+z <- rpois(100,2)
+# Multiple base plots
+par(mfrow=c(2,1))
+plot(x, y, pch=20)
+plot(x, z, pch=19)
+# Example
+par(mfrow=c(1,1))
+x <- rnorm(100); y <- x + rnorm(100); g <- gl(2, 50, labels = c("Male", "Female"))
+plot(x, y, type = "n")
+points(x[g == "Male"], y[g == "Male"], col = "blue")
+points(x[g == "Female"], y[g == "Female"], col = "red")
+
+# L3 Graphics Devices - smth where you can make a plot appear: e.g. screen or file devices
+?Devices
+# vector formats
+?pdf(); ?svg(); ?win.metafile; ?postscript
+# bitmap formats
+?png(); ?jpeg(); ?tiff(); ?bmp()
+dev.cur() # the currently active graphics device can be found by calling
+dev.set() # to change the active graphics device
+# copying plots
+dev.copy() # to copy a plot from one device to another
+dev.copy2pdf() # copy to a pdf file
+# exmaple of copying from screen device to a png file device, a faster way!
+x <- rnorm(100); y <- rnorm(100); plot(x, y, pch=20)
+dev.copy(png, file = "test.png") # copy a plot to a png file, but the result may not be the identical to the original!
+dev.off() # to close the png device!
+```
+
+Week 1 Quiz
+
+```{r week_1_quiz, echo=FALSE}
+# Week 1 Quiz
+# Q1 - Show comparisons
+# Q2 - They are typically made very quickly.
+# Q3 - Plots are created and annotated with separate functions
+# Q4 - A PNG file
+# Q5 - SVG
+# Q6 - Scatterplots with many many points
+# Q7 - lines()
+# Q8 - windows()
+# Q9 - the plotting symbol/character in the base graphics system
+# Q10 - Construct the plot on the screen device and then copy it to a PDF file with dev.copy2pdf()
+```
+
+Week 2
+
+```{r week_2, echo=FALSE}
+# L1. Lattice Plotting System - all plotting/annotation is done at once with a single function call
+?xyplot() # scatterplots
+?bwplot() # box-and-whickers plot, boxplots
+?histogram() # histogram
+?stripplot() # a boxplot with actual points
+?dotplot() # plot dots on "violin strings"
+?splom() # scatterplot matrix, similar to pairs in base plotting system
+?levelplot(); ?contourplot() # fo rplotting "image" data
+# simple lattice plot
+library(lattice); library(datasets)
+xyplot(Ozone ~ Wind, data = airquality)
+# multidimentional panel
+airquality <- transform(airquality, Month = factor(Month))
+xyplot(Ozone ~ Wind | Month, data = airquality, layout = c(5,1)) # auto-printing
+# lattice behaviour
+p <- xyplot(Ozone ~ Wind, data = airquality)
+print(p)
+# panel functions
+set.seed(10)
+x <- rnorm(100); f <- rep(0:1, each=50); y <- x + f - f * x + rnorm(100, sd=0.5)
+f <- factor(f, labels=c("group 1", "group 2"))
+xyplot(y ~ x | f, layout = c(2,1)) # plot with two panels
+# custom panel function
+xyplot(y ~ x | f, panel = function(x, y, ...) {
+  panel.xyplot(x, y, ...) # first call the default panel function for xyplot
+  panel.abline(h = median(y), lty = 2) # add the horizontal line at the median
+})
+xyplot(y ~ x | f, panel = function(x, y, ...) {
+  panel.xyplot(x, y, ...) # first call the default panel function for xyplot
+  panel.lmline(x, y, col = 2) # overlay a simple linear regression line
+})
+
+# L2. ggplot2
+library(ggplot2); str(mpg)
+qplot(displ, hwy, data=mpg, color=drv)
+qplot(displ, hwy, data=mpg, geom=c("point", "smooth"))
+qplot(displ, data=mpg, geom="density")
+qplot(hwy, data=mpg, fill=drv) # histogram
+qplot(displ, hwy, data=mpg, facets=.~drv) # add facets (like panels) column-wise (~right)
+qplot(hwy, data=mpg, facets=drv~., binwidth=2) # add facets (like panels) row-wise (left~)
+qplot(displ, hwy, data=mpg, color=drv) + geom_smooth(method = "lm")
+?coord_cartesian(ylim=c(-3,3)) # to include but not show outliers
+?cut() # to categorize the continuous variable to a series of ranges so we can condition on them
+```
+
+Week 2 Quiz
+
+```{r week_2_quiz, echo=FALSE}
+# Q1 - an object of class "trellis"
+# Q2 - A set of 3 panels showing the relationship between weight and time for each diet.
+library(nlme)
+library(lattice)
+xyplot(weight ~ Time | Diet, BodyWeight)
+# Q3 - lpoints()
+# Q4 - The object 'p' has not yet been printed with the appropriate print method.
+library(lattice)
+library(datasets)
+data(airquality)
+p <- xyplot(Ozone ~ Wind | factor(Month), data = airquality)
+# Q5 - trellis.par.set()
+# Q6 - the Grammar of Graphics developed by Leland Wilkinson
+# Q7 - 
+library(datasets); data(airquality)
+qplot(Wind, Ozone, data = airquality, facets = . ~ factor(Month))
+# Q8 - a plotting object like point, line, or other shape
+# Q9 - ggplot does not yet know what type of layer to add to the plot.
+library(ggplot2); library(ggplot2movies)
+g <- ggplot(movies, aes(votes, rating))
+print(g)
+# Q10 - qplot(votes, rating, data = movies) + geom_smooth()
+qplot(votes, rating, data = movies)
+```
+
+Week 3
+
+```{r week_3, echo=FALSE}
+# L1. Hierarchical clustering
+set.seed(1234)
+par(mar = c(0,0,0,0))
+x <- rnorm(12, mean = rep(1:3, each=4), sd=0.2)
+y <- rnorm(12, mean = rep(c(1,2,1), each=4), sd=0.2)
+plot(x, y, col="blue", pch=19, cex=2)
+text(x + 0.05, y + 0.05, labels=as.character(1:12))
+df <- data.frame(x=x, y=y)
+# calculate the paitwise distances between the points
+distxy <- dist(df)
+hcldistxy <- hclust(distxy); plot(hcldistxy) # the next step is to cut the tree to get the number of clusters
+# prettier dendrograms
+myplclust <- function(hclust, lab=hclust$labels, lab.col=rep(1,length(hclust$labels)), hang=0.1,...){
+  y <- rep(hclust$height, 2)
+  x <- as.numeric(hclust$merge)
+  y <- y[which(x<0)]
+  x <- y[which(x<0)]
+  x <- abs(x)
+  y <- y[order(x)]
+  x <- x[order(x)]
+  plot(hclust, labels=FALSE, hang=hang, ...)
+  text(x=x, y=y[hclust$order]-(max(hclust$height)*hang), labels=lab[hclust$order],
+       col=lab.col[hclust$order], srt=90, adj=c(1, 0.5), xpd=NA, ...)
+}
+myplclust(hcldistxy, lab=rep(1:3, each=4), lab.col=rep(1:3,each=4))
+# how do you merge points together? by default "complete" method
+# heatmap
+df <- data.frame(x=x, y=y)
+set.seed(143)
+dm <- as.matrix(df)[sample(1:12),]
+heatmap(dm) # runs hclust on rows and columns of the table
+
+## L2. K-means clustering and dimension reduction
+# K-means clustering
+set.seed(1234)
+par(mar = c(0,0,0,0))
+x <- rnorm(12, mean = rep(1:3, each=4), sd=0.2)
+y <- rnorm(12, mean = rep(c(1,2,1), each=4), sd=0.2)
+plot(x, y, col="blue", pch=19, cex=2)
+text(x + 0.05, y + 0.05, labels=as.character(1:12))
+df <- data.frame(x=x, y=y)
+km <- kmeans(df, centers=3); names(km); km$cluster
+par(mar=rep(0.2,4))
+plot(x, y, col=km$cluster, pch=19, cex=2)
+points(km$centers, col=1:3, pch=3, cex=3, lwd=3)
+# heatmap
+set.seed(1234)
+dm <- as.matrix(df)[sample(1:12),]
+km2 <- kmeans(dm, centers=3)
+par(mfrow=c(1,2), mar=c(2,4,0.1,0.1))
+image(t(dm)[, nrow(dm):1], yaxt="n"); image(t(dm)[, order(km2$cluster)], yaxt="n")
+
+# Dimension reduction: PCA and singular value decomposition
+set.seed(12345)
+par(mar=rep(0.2,4))
+dm <- matrix(rnorm(400), nrow=40)
+image(1:10, 1:40, t(dm)[, nrow(dm):1])
+heatmap(dm)
+set.seed(678910) # what id we add a pattern?
+for(i in 1:40){
+  # flip a coin
+  cF <- rbinom(1, size=1, prob=0.5)
+  if (cF) {
+    dm[i,] <- dm[i,] + rep(c(0,3), each=5)
+  }
+}
+image(1:10, 1:40, t(dm)[, nrow(dm):1]); heatmap(dm)
+# patterns in rows and columns
+hh <- hclust(dist(dm))
+dmordered <- dm[hh$order,]
+par(mfrow=c(1,3))
+image(t(dmordered)[, nrow(dmordered):1])
+plot(rowMeans(dmordered), 40:1, xlab = "Row Mean", ylab = "Row", pch = 19)
+plot(colMeans(dmordered), xlab = "Column", ylab = "Column Mean", pch = 19)
+# SVD
+svd1 <- svd(scale(dmordered)) # list of three matrices u, d and v
+par(mfrow=c(1,3))
+image(t(dmordered)[, nrow(dmordered):1])
+plot(svd1$u[, 1], 40:1, xlab = "Row", ylab = "First left singular vector", pch = 19)
+plot(svd1$v[, 1], xlab = "Column", ylab = "First right singular vector", pch = 19)
+# variance explained
+par(mfrow=c(1,2))
+plot(svd1$d, xlab = "Column", ylab = "Singular value", pch = 19)
+plot(svd1$d^2/sum(svd1$d^2), xlab = "Column", ylab = "Prop. of variance explained", pch = 19)
+# relationship to principal components is close to svd
+svd1 <- svd(scale(dmordered))
+pca1 <- prcomp(dmordered, scale=T)
+plot(pca1$rotation[,1], svd1$v[,1], pch=19, xlab="Principal component 1", ylab="Right Singular Vector 1"); abline(c(0,1))
+# variance explained
+constantMatrix <- dmordered*0
+for(i in 1:dim(dmordered)[1]){
+  constantMatrix[i,] <- rep(c(0,1), each=5)
+}
+svd1 <- svd(constantMatrix)
+par(mfrow=c(1,3))
+image(t(constantMatrix)[, nrow(constantMatrix):1])
+plot(svd1$d, xlab = "Column", ylab = "Singular value", pch = 19)
+plot(svd1$d^2/sum(svd1$d^2), xlab = "Column", ylab = "Prop. of variance explained", pch = 19) # variance can be explained by a single component
+# add a second pattern to a dataset
+set.seed(678910)
+for(i in 1:40){
+  # flip a coin
+  cf1 <- rbinom(1, size=1, prob=0.5)
+  cf2 <- rbinom(1, size=1, prob=0.5)
+  if (cf1) {
+    dm[i,] <- dm[i,] + rep(c(0,5), each=5)
+  }
+  if (cf2) {
+    dm[i,] <- dm[i,] + rep(c(0,5), 5)
+  }
+}
+hh <- hclust(dist(dm))
+dmordered <- dm[hh$order,]
+svd2 <- svd(scale(dmordered))
+par(mfrow=c(1,3))
+image(t(dmordered)[, nrow(dmordered):1])
+# true patterns
+plot(rep(c(0,1), each=5), xlab = "Column", ylab = "Pattern 1", pch = 19)
+plot(rep(c(0,1), 5), xlab = "Column", ylab = "Pattern 2", pch = 19)
+# v and patterns in svd2
+svd2 <- svd(scale(dmordered))
+par(mfrow=c(1,3))
+image(t(dmordered)[, nrow(dmordered):1])
+plot(svd2$v[,1], xlab = "Column", ylab = "First right singular vector", pch = 19)
+plot(svd2$v[,2], xlab = "Column", ylab = "Second right singular vector", pch = 19)
+# d and variance explained
+svd2 <- svd(scale(dmordered))
+par(mfrow=c(1,2))
+plot(svd2$d, xlab = "Column", ylab = "Singular", pch = 19)
+plot(svd2$d^2/sum(svd2$d^2), xlab = "Column", ylab = "Percent of variance explained", pch = 19)
+
+# Dealing with missing values
+# Imputing
+library(BiocManager); BiocManager::install("impute"); library(impute)
+dm2 <- dmordered
+dm2[sample(1:100, size=40, replace=FALSE)] <- NA
+dm2 <- impute.knn(dm2)$data
+svd1 <- svd(scale(dmordered)); svd2 <- svd(scale(dm2))
+par(mfrow=c(1,2))
+plot(svd1$v[,1],pch=19); plot(svd2$v[,1],pch=19) # very similar
+
+# face exmaple
+load("data/face.rda"); image(t(faceData)[, nrow(faceData):1])
+# variance explained
+svd1 <- svd(scale(faceData)); plot(svd1$d^2/sum(svd1$d^2), xlab = "Singular vector", ylab = "Percent of variance explained", pch = 19)
+# create approximations that use fewer variables
+svd1 <- svd(scale(faceData))
+approx1 <- svd1$u[,1] %*% t(svd1$v[,1]) %*% svd1$d[1] # use the first singular vector
+approx5 <- svd1$u[,1:5] %*% t(svd1$v[,1:5]) %*% diag(svd1$d[1:5]) # use first five singular vectors; make diagonal matrix of d
+approx10 <- svd1$u[,1:10] %*% t(svd1$v[,1:10]) %*% diag(svd1$d[1:10]) # use first 10 singular vectors; make diagonal matrix of d
+# plot approximations
+par(mfrow=c(1,4))
+image(t(approx1)[, nrow(approx1):1], main="(a)")
+image(t(approx5)[, nrow(approx5):1], main="(b)")
+image(t(approx10)[, nrow(approx10):1], main="(c)")
+image(t(faceData)[, nrow(faceData):1], main="(d)") # original data
+
+# L3 Working with color
+?grDevices; library(help = "grDevices")
+?colorRamp(); ?colorRampPalette
+?colors()
+pal <- colorRamp(c("red", "blue")) # returns a function called pal
+pal(0) # RGB in columns: red (1st column), green (second column), blue (third column); get red color
+pal(1) # blue
+pal(0.5) # pink
+pal(seq(0,1,len=10)) # get sequence of colors between red and blue
+
+pal <- colorRampPalette(c("red", "yellow")) # returns a function called pal
+pal(2) # returns two colors in HEX format
+pal(10) # returns ten colors in HEX format
+
+library(help = "RColorBrewer"); library(RColorBrewer)
+cols <- brewer.pal(3, "BuGn"); cols # returns three colors from the BuGn palette
+pal <- colorRampPalette(cols)
+image(volcano, col=pal(20))
+
+x <- rnorm(10000); y <- rnorm(10000)
+smoothScatter(x,y) # useful when you need to plot lots of points! It create a 2D histogram; high density areas (with lots of points) - darker
+
+library(help = "colorspace") # for different control over colors
+
+?make.names()
+```
+
+Week 4 programming assignment
+
+```{r week_4_PA, echo=FALSE}
+# Downloading
+#setwd("/Users/foffa/Desktop/Learning/online_edu/coursera/data_science_specialisation_JHU/exploratory_data_analysis/w4_pa")
+fileURL <- "https://d396qusza40orc.cloudfront.net/exdata%2Fdata%2FNEI_data.zip"
+temp <- tempfile(); download.file(fileURL,temp)
+file.copy(from = temp, to = paste0(getwd(),"/raw_data.zip")) # download zip file as raw_data.zip
+unlink(temp) # delete the temp file or use file.remove(temp)
+unzip("raw_data.zip") # unzip the raw_data.zip
+# Reading PM2.5 Emissions Data (NEI) and Source Classification Code Table (SCC)
+NEI <- readRDS("summarySCC_PM25.rds")
+SCC <- readRDS("Source_Classification_Code.rds")
+
+# The overall goal of this assignment is to explore the National Emissions Inventory database and see what it say about fine particulate matter pollution in the United states over the 10-year period 1999–2008.
+
+# Plot 1
+# Q1: Have total emissions from PM2.5 decreased in the United States from 1999 to 2008? Using the base plotting system, make a plot showing the total PM2.5 emission from all sources for each of the years 1999, 2002, 2005, and 2008.
+#head(NEI)
+library(dplyr)
+options(width = 105, scipen = 7)
+q1 <- tapply(NEI$Emissions, NEI$year, sum) # get total emissions from 199 to 2008
+df1 <- as.data.frame(q1); colnames(df1) <- "total_emissions"
+#df1$year <- rownames(df1); df1 <- select(df1, year, total_emissions); df1
+#df1$year <- factor(rownames(df1)); df1 <- select(df1, year, total_emissions); df1
+#df1$year <- as.Date(df1$year, "%Y")
+df1 <- df1[1:4, "total_emissions"]
+
+png(filename = "plot1.png", width = 7, height = 6, units = "in", res = 300)
+par(mfrow=c(1,1))
+barplot(df1, names.arg = c("1999", "2002", "2005", "2008"),
+        main = "Total emissions from PM2.5 in the USA from 1999 to 2008",
+        xlab = "Year", ylab = "Total PM2.5 emissions, in tons")
+dev.off()
+
+# Plot 2
+# Q2: Have total emissions from PM2.5 decreased in the Baltimore City, Maryland (fips == "24510") from 1999 to 2008? Use the base plotting system to make a plot answering this question.
+options(width = 105, scipen = 7)
+balt.df <- NEI[NEI$fips=="24510",] # get emissions for Baltimore City, Maryland (fips == "24510")
+q2 <- tapply(balt.df$Emissions, balt.df$year, sum) # get total emissions from 1999 to 2008
+df2 <- as.data.frame(q2); colnames(df2) <- "total_emissions"
+df2 <- df2[1:4, "total_emissions"]
+#df2$year <- rownames(df2); df2 <- select(df2, year, total_emissions)
+
+png(filename = "plot2.png", width = 7, height = 6, units = "in", res = 300)
+par(mfrow=c(1,1))
+barplot(df2, names.arg = c("1999", "2002", "2005", "2008"),
+        main = "Total emissions from PM2.5 in the Baltimore City from 1999 to 2008",
+        xlab = "Year", ylab = "Total PM2.5 emissions, in tons")
+dev.off()
+
+# Plot 3
+# Q3: Of the four types of sources indicated by the type (point, nonpoint, onroad, nonroad) variable, which of these four sources have seen decreases in emissions from 1999–2008 for Baltimore City? Which have seen increases in emissions from 1999–2008? Use the ggplot2 plotting system to make a plot answer this question.
+library(plyr); library(ggplot2); library(reshape2)
+options(width = 105, scipen = 7)
+#unique(NEI$type)
+point.df <- NEI[NEI$type=="POINT",]; point.df <- tapply(point.df$Emissions, point.df$year, sum)
+nonpoint.df <- NEI[NEI$type=="NONPOINT",]; nonpoint.df <- tapply(nonpoint.df$Emissions, nonpoint.df$year, sum)
+onroad.df <- NEI[NEI$type=="ON-ROAD",]; onroad.df <- tapply(onroad.df$Emissions, onroad.df$year, sum)
+nonroad.df <- NEI[NEI$type=="NON-ROAD",]; nonroad.df <- tapply(nonroad.df$Emissions, nonroad.df$year, sum)
+
+point.df <- as.data.frame(point.df); colnames(point.df) <- "point"
+nonpoint.df <- as.data.frame(nonpoint.df); colnames(nonpoint.df) <- "nonpoint"
+onroad.df <- as.data.frame(onroad.df); colnames(onroad.df) <- "onroad"
+nonroad.df <- as.data.frame(nonroad.df); colnames(nonroad.df) <- "nonroad"
+point.df$year <- rownames(point.df); point.df <- select(point.df, year, point); point.df
+nonpoint.df$year <- rownames(nonpoint.df); nonpoint.df <- select(nonpoint.df, year, nonpoint); nonpoint.df
+onroad.df$year <- rownames(onroad.df); onroad.df <- select(onroad.df, year, onroad); onroad.df
+nonroad.df$year <- rownames(nonroad.df); nonroad.df <- select(nonroad.df, year, nonroad); nonroad.df
+
+df_list <- list(point.df, nonpoint.df, onroad.df, nonroad.df)
+df3 <- join_all(df_list)
+test <- melt(df3, id=c("year"), measure.vars = c("point", "nonpoint", "onroad", "nonroad"))
+
+png(filename = "plot3.png", width = 10, height = 6, units = "in", res = 300)
+ggplot(data=test, aes(x=year, y=value, fill=variable)) + 
+  geom_bar(position="dodge", stat="identity") +
+  theme_classic() +
+  scale_fill_brewer(name = "Four sources:", palette="Dark2") +
+  labs(title = "Total emissions from PM2.5 from four sources from 1999–2008 for Baltimore City") +
+  ylab("Total PM2.5 emissions, in tons") + xlab("Year")
+dev.off()
+
+
+# Plot 4
+# Q4: Across the United States, how have emissions from coal combustion-related sources changed from 1999–2008?
+library(plyr); library(ggplot2); library(reshape2)
+options(width = 105, scipen = 7)
+emm_sources <- unique(SCC$EI.Sector) # get all the sources
+coal_sources <- emm_sources[grep("[Cc]oal", emm_sources)] # get coal combustion-related sources
+scc_coal <- SCC[SCC$EI.Sector %in% coal_sources,]
+scc_coal_codes <- unique(scc_coal$SCC) # get coal SCC codes
+q4 <- NEI[NEI$SCC %in% scc_coal_codes,]
+df4 <- tapply(q4$Emissions, q4$year, sum)
+df4 <- as.data.frame(df4); colnames(df4) <- "total_emissions"
+df4$year <- rownames(df4); df4 <- select(df4, year, total_emissions); df4
+
+png(filename = "plot4.png", width = 8, height = 6, units = "in", res = 300)
+ggplot(df4, aes(x=year, y=total_emissions)) + 
+  geom_bar(stat="identity") +
+  theme_classic() +
+  labs(title = "Total emissions from PM2.5 from coal combustion-related sources from 1999–2008") +
+  ylab("Total PM2.5 emissions, in tons") + xlab("Year")
+dev.off()
+
+# Plot 5
+# Q5: How have emissions from motor vehicle sources changed from 1999–2008 in Baltimore City?
+library(plyr); library(ggplot2); library(reshape2)
+options(width = 105, scipen = 7)
+emm_sources <- unique(SCC$EI.Sector) # get all the sources
+veh_sources <- emm_sources[grep("[Vv]ehicles", emm_sources)] # get motor vehicle sources
+scc_veh <- SCC[SCC$EI.Sector %in% veh_sources,]
+scc_veh_codes <- unique(scc_veh$SCC) # get motor vehicle SCC codes
+q5 <- NEI[(NEI$SCC %in% scc_veh_codes) & (NEI$fips == "24510"),] # get motor vehicle emissions for Baltimore City, Maryland (fips == "24510")
+df5 <- tapply(q5$Emissions, q5$year, sum)
+df5 <- as.data.frame(df5); colnames(df5) <- "total_emissions"
+df5$year <- rownames(df5); df5 <- select(df5, year, total_emissions); df5
+
+png(filename = "plot5.png", width = 8, height = 6, units = "in", res = 300)
+ggplot(df5, aes(x=year, y=total_emissions)) + 
+  geom_bar(stat="identity") +
+  theme_classic() +
+  labs(title = "Total motor vehicle emissions from PM2.5 for Baltimore City from 1999–2008") +
+  ylab("Total PM2.5 emissions, in tons") + xlab("Year")
+dev.off()
+
+# Plot 6
+# Q6: Compare emissions from motor vehicle sources in Baltimore City with emissions from motor vehicle sources in Los Angeles County, California (fips == "06037". Which city has seen greater changes over time in motor vehicle emissions?
+library(plyr); library(ggplot2); library(reshape2)
+options(width = 105, scipen = 7)
+emm_sources <- unique(SCC$EI.Sector) # get all the sources
+veh_sources <- emm_sources[grep("[Vv]ehicles", emm_sources)] # get motor vehicle sources
+scc_veh <- SCC[SCC$EI.Sector %in% veh_sources,]
+scc_veh_codes <- unique(scc_veh$SCC) # get motor vehicle SCC codes
+#q6 <- NEI[(NEI$SCC %in% scc_veh_codes) & (NEI$fips == "24510" | NEI$fips == "06037"),] # get motor vehicle emissions for Baltimore City and Los Angeles
+q6_balt <- NEI[(NEI$SCC %in% scc_veh_codes) & (NEI$fips == "24510"),] # get motor vehicle emissions for Baltimore City
+q6_la <- NEI[(NEI$SCC %in% scc_veh_codes) & (NEI$fips == "06037"),] # get motor vehicle emissions for Los Angeles
+df6_balt <- tapply(q6_balt$Emissions, q6_balt$year, sum) # get total emissions
+df6_la <- tapply(q6_la$Emissions, q6_la$year, sum) # get total emissions
+
+df6_balt <- as.data.frame(df6_balt); colnames(df6_balt) <- "total_emissions"
+df6_la <- as.data.frame(df6_la); colnames(df6_la) <- "total_emissions"
+
+df6_balt$year <- rownames(df6_balt); df6_balt <- select(df6_balt, year, total_emissions); df6_balt
+df6_la$year <- rownames(df6_la); df6_la <- select(df6_la, year, total_emissions); df6_la
+
+merged <- merge(df6_balt, df6_la, by = "year")
+colnames(merged) <- c("year", "Baltimore", "Los Angeles")
+melted <- melt(merged, id=c("year"), measure.vars = c("Baltimore", "Los Angeles"))
+
+png(filename = "plot6.png", width = 9, height = 6, units = "in", res = 300)
+ggplot(melted, aes(x=year, y=value)) + 
+  geom_bar(stat="identity") +
+  theme_classic() +
+  #scale_color_brewer(name = "Four sources:", palette="Dark2") +
+  labs(title = "Total motor vehicle emissions from PM2.5 for Baltimore and Los Angeles from 1999–2008") +
+  ylab("Total PM2.5 emissions, in tons") + xlab("Year") +
+  facet_wrap(~ variable)
+dev.off()
+```
