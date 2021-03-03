@@ -516,9 +516,26 @@ ggplot(a, aes(x=factor(cyl), y=factor(gear), fill=n)) +
 
 Section 14. Simple Linear Regression
 
+To find the relationship between dependent and independent variable (kinda a supervised learning).
+
 ```{r s14}
+head(women)
+# mathematical equation is weight = a + b*(height); a is an intercept and b is a slope
+plot(women$height, women$weight) # weight is increasing with height
+lm_model <- lm(weight ~ height, data=women); lm_model
+weight = -87.52 + 3.45(height) # lm_model regression coeficients
 
+# residuals are standard errors that occur when there is a difference in the values between the actual observed values and the response values the model predicts. There is a range in the errors for the residuals show that there should be asymetrical distribution across these points on the mean value of zero. Certain points are far away from the actual points. Residual standard error is the measure of the variation of observation around the regression line. Multiple R-squared shows the accuracy, how well the model fits the actual values.
+summary(lm_model)
+abline(lm_model, col="red", lwd=1)
 
+# predicting the value of weight with new data of height
+range(women$height); range(women$weight)
+new_data <- data.frame(height=c(50,75,80,85))
+pred_weight <- predict(lm_model, new_data); pred_weight
+
+# checking assumptions of the model by diagnostic plotting
+plot(lm_model)
 ```
 
 Section 15. Multi-Linear Regression
