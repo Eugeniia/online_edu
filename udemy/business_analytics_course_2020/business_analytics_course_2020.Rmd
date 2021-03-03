@@ -432,9 +432,86 @@ pie3D(slices, labels=lbls, explode = 0.1,main="3D pie chart")
 
 Section 13. GGplot - GRaphical Analysis
 
+Grammar of graphics.
+
 ```{r s13}
+library(ggplot2); library(ggrepel); library(dplyr)
+## scatterplot
+ggplot(data=mtcars, aes(x=wt, y=mpg)) # creating an empty base for plotting
+ggplot(data=mtcars, aes(x=wt, y=mpg)) + geom_point(color="red", size=3, shape=20)
+table(mtcars$cyl)
+ggplot(data=mtcars, aes(x=wt, y=mpg)) + geom_point(color=mtcars$cyl, size=3, shape=20)
+ggplot(data=mtcars, aes(x=wt, y=mpg)) + geom_point(aes(color=cyl), size=3, shape=20)
+ggplot(data=mtcars, aes(x=wt, y=mpg)) + geom_point(aes(color=factor(cyl)), size=3, shape=20)
+ggplot(data=mtcars, aes(x=wt, y=mpg)) + geom_point(aes(color=factor(cyl), size=factor(am)), shape=20)
+ggplot(data=mtcars, aes(x=wt, y=mpg)) + geom_point(aes(color=factor(cyl), size=factor(am),
+                                                       shape=factor(gear)))
+ggplot(data=mtcars, aes(x=wt, y=mpg)) + 
+  geom_point(aes(color=factor(cyl), size=factor(am), shape=factor(gear))) +
+  labs(title="Adding dimensions to graph", subtitle="Scatterplot", x="Weight", y="Mileage")
 
+ggplot(data=mtcars, aes(x=wt, y=mpg)) + 
+  geom_point(aes(color=factor(cyl), size=factor(am), shape=factor(gear))) +
+  labs(title="Adding dimensions to graph", subtitle="Scatterplot", x="Weight", y="Mileage") +
+  facet_grid(vs~carb)
 
+ggplot(data=mtcars, aes(x=wt, y=mpg)) + 
+  geom_point(aes(color=factor(cyl), size=factor(am), shape=factor(gear))) +
+  labs(title="Adding dimensions to graph", subtitle="Scatterplot", x="Weight", y="Mileage") +
+  facet_grid(cyl+vs~carb)
+
+ggplot(data=mtcars, aes(x=wt, y=mpg)) + 
+  geom_point(aes(color=factor(cyl), size=factor(am), shape=factor(gear))) +
+  labs(title="Adding dimensions to graph", subtitle="Scatterplot", x="Weight", y="Mileage") +
+  facet_grid(cyl+vs~carb) +
+  geom_text(aes(label=rownames(mtcars)), size=2.5)
+
+# ggrepel to make labels tidy!
+ggplot(data=mtcars, aes(x=wt, y=mpg)) + 
+  geom_point(aes(color=factor(cyl), size=factor(am), shape=factor(gear))) +
+  labs(title="Adding dimensions to graph", subtitle="Scatterplot", x="Weight", y="Mileage") +
+  facet_grid(cyl+vs~carb) +
+  ggrepel::geom_text_repel(aes(label=rownames(mtcars)), size=2.5)
+
+## barplot
+ggplot(data=mtcars, aes(x=cyl)) + geom_bar()
+ggplot(data=mtcars, aes(x=cyl)) + geom_bar(fill="red")
+ggplot(data=mtcars, aes(x=cyl)) + geom_bar(aes(fill=factor(cyl)))
+ggplot(data=mtcars, aes(x=cyl)) + geom_bar(aes(col=factor(cyl)))
+ggplot(data=mtcars, aes(x=cyl)) + geom_bar(aes(col=factor(cyl))) + coord_flip()
+
+mtcars %>% group_by(cyl) %>% summarise(n=n()) %>% ggplot(.,aes(x=cyl, y=n)) +
+  geom_bar(stat="identity", aes(fill=factor(cyl))) +
+  geom_text(aes(label=n))
+
+mtcars %>% group_by(cyl, gear, am, vs) %>% summarise(n=n()) %>% ggplot(., aes(x=cyl, y=n)) +
+  geom_bar(stat="identity", aes(fill=factor(cyl))) +
+  geom_text(aes(label=n)) +
+  facet_grid(gear~am)
+
+# rescaling the space
+mtcars %>% group_by(cyl, gear, am, vs) %>% summarise(n=n()) %>% ggplot(., aes(x=cyl, y=n)) +
+  geom_bar(stat="identity", aes(fill=factor(cyl))) +
+  geom_text(aes(label=n)) +
+  facet_grid(gear~am, scales="free", space="free")
+
+## heatmap
+a <- mtcars %>% group_by(cyl, gear) %>% summarise(n=n()); a
+
+ggplot(a, aes(x=factor(cyl), y=factor(gear), fill=n)) + geom_tile()
+ggplot(a, aes(x=factor(cyl), y=factor(gear), fill=n)) + 
+  geom_tile() +
+  geom_text(aes(label=n), size=6)
+
+ggplot(a, aes(x=factor(cyl), y=factor(gear), fill=n)) + 
+  geom_tile() +
+  geom_text(aes(label=n), size=6) +
+  scale_fill_gradient()
+
+ggplot(a, aes(x=factor(cyl), y=factor(gear), fill=n)) + 
+  geom_tile() +
+  geom_text(aes(label=n), size=6) +
+  scale_fill_gradient2()
 ```
 
 Section 14. Simple Linear Regression
