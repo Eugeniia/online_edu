@@ -540,8 +540,39 @@ plot(lm_model)
 
 Section 15. Multi-Linear Regression
 
-```{r s15}
+It's used to find the relationship between dependent and multiple independent variables.
 
+```{r s15}
+plot(mpg~hp, data=mtcars)
+plot(mpg~wt, data=mtcars)
+lm_model <- lm(mpg~hp+wt, data=mtcars)
+summary(lm_model)
+
+# creating training and test data
+training_ind <- sample(1:nrow(mtcars), 0.8*nrow(mtcars))
+training_data <- mtcars[training_ind,] # modelling training data
+test_data <- mtcars[-training_ind,] # modelling test data
+
+# building the model on training data
+lm_model <- lm(mpg~cyl+disp+hp+wt, data=training_data)
+summary(lm_model) # model summary
+
+# removing disp and cyl as they are not significantly contribute
+lm_model <- lm(mpg~cyl+hp+wt, data=training_data); summary(lm_model)
+lm_model <- lm(mpg~hp+wt, data=training_data); summary(lm_model)
+
+# predicting values for test data
+test_data$mpgPred <- predict(lm_model, test_data); test_data
+
+# determining prediction accuracy on test data using MAPE (Mean Absolute Percentage Error)
+# The lower the value, the better the accuracy of the prediction model
+mape <- mean(abs(test_data$mpgPred - test_data$mpg)/test_data$mpg); mape
+plot(lm_model) # diagnostic plotting
+```
+
+Section 16. Logistic Regression
+
+```{r s16}
 
 ```
 
