@@ -572,9 +572,62 @@ plot(lm_model) # diagnostic plotting
 
 Section 16. Logistic Regression
 
+Classification algorithm predicting a binary outcome.
+
 ```{r s16}
+data <- read.csv("https://stats.idre.ucla.edu/stat/data/binary.csv")
+head(data); str(data); summary(data); sapply(data, sd)
+data$rank <- as.factor(data$rank); data$admit <- as.factor(data$admit); str(data); dim(data)
+xtabs(~admit + rank, data=data) # which rank is more successful in getting admitted
+
+# model 1 - using all independent variables
+mod_1 <- glm(admit ~ gre + gpa + rank, data=data, family="binomial")
+summary(mod_1) # AIC: 470.52
+
+# model 2 - creating training and testing datasets
+n <- nrow(data)
+sample <- sample(1:n, size = round(0.7*n), replace=FALSE)
+train_data <- data[sample,]; test_data <- data[-sample,]
+mod_2 <- glm(admit ~ gre + gpa + rank, data=train_data, family="binomial")
+summary(mod_2) # AIC: 324.07. AIC is decreased. Good!
+# prediction
+predicted <- predict(mod_2, newdata = test_data, type="response")
+predictV <- factor(ifelse(predicted < 0.5, 0, 1))
+test_data <- cbind(test_data, predictV)
+head(test_data); str(test_data); summary(test_data)
+# checking accuracy of the model
+install.packages("caret"); library(caret)
+install.packages('e1071', dependencies=TRUE)
+confusionMatrix(test_data$admit, test_data$predictV) # Accuracy : 0.6833
+
+# model 3 - removing gre variable from the analysis
+mod_3 <- glm(admit ~ gpa + rank, data=train_data, family="binomial")
+summary(mod_3) # AIC: 323.63
+# prediction
+predicted2 <- predict(mod_3, newdata = test_data, type="response")
+predictV2 <- factor(ifelse(predicted2 < 0.5, 0, 1))
+test_data <- cbind(test_data, predictV2)
+head(test_data); str(test_data); summary(test_data)
+# checking accuracy of the model
+library(caret) # confusion matrix using caret
+confusionMatrix(test_data$admit, test_data$predictV2) # Accuracy : 0.725
+table(test_data$admit, predictV2 > 0.5) # confusion matrix using table command
+mean(test_data$predictV2 == test_data$admit) # accuracy using mean command: 0.725
+# creating new data
+range(data$gpa)
+df <- data.frame(gpa=3.7, rank=factor(2)); df
+p <- predict(mod_3, newdata=df); p
+p1 <- factor(ifelse(p < 0.5, 0, 1)); p1
+df.p <- cbind(df, p1); df.p
+```
+
+Section 17. Decision Tree
+
+```{r s17}
+
 
 ```
+
 
 
 
