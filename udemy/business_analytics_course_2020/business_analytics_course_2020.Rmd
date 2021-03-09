@@ -623,11 +623,127 @@ df.p <- cbind(df, p1); df.p
 
 Section 17. Decision Tree
 
+A type of supervised learning algorithm.
+
 ```{r s17}
+pacman::p_load(rpart, rpart.plot, dplyr)
 
+# creating classification tree
+str(mtcars); head(mtcars); df <- mtcars; df$am <- factor(df$am); str(df)
+dt1 <- rpart(am ~ mpg, data=df, method = "class"); dt1
+rpart.plot(dt1)
+rpart.plot(dt1, type=1, nn=T)
+rpart.plot(dt1, type=2, extra=104, nn=T) # better looking model
 
+df %>% select(mpg, am) %>% arrange(mpg)
+df %>% group_by(am) %>% summarise(n=n()) # 19/32
+df %>% select(mpg, am) %>% arrange(mpg)
+
+rpart.rules(dt1, nn=T)
+rpart.rules(dt1, cover=T, nn=T)
+sample1 <- dplyr::sample_n(df, 3); sample1
+rpart.predict(dt1, newdata=sample1, rules=T)
+rpart.predict(dt1, newdata=sample1)
+
+# predict survive or not
+data("ptitanic"); head(ptitanic); str(ptitanic); names(ptitanic); dim(ptitanic)
+dt2 <- rpart(survived ~ ., data=ptitanic); dt2
+rpart.plot(dt2)
+rpart.plot(dt2, cex=0.8) # increase the font size
+# partition data into two parts
+library(caret)
+trgIndex <- createDataPartition(ptitanic$survived, p=.8, list=FALSE, times=1)
+trgSet <- ptitanic[trgIndex,]
+testSet <- ptitanic[-trgIndex,]
+dim(trgSet); dim(testSet)
+dt3 <- rpart(survived ~., data=trgSet); dt3
+rpart.plot(dt3)
+rpart.plot(dt3, type=1, extra=104, nn=T, cex=.9)
+rpart.plot(dt3, type=2, extra=104, nn=T, cex=.9)
+# prunning tree basis or complexity parameter (CP); CP values reduces error in prediction
+printcp(dt3) # the least cross-validation error (xerror) is 0.5450, for this CP = 0.01
+dt3pr <- prune(dt3, cp=.01); dt3pr
+rpart.plot(dt3pr, type=2, extra=104, nn=T, cex=.9)
+# taking random CP
+dt3pr2 <- prune(dt3, cp=.02); dt3pr2
+rpart.plot(dt3pr2, type=2, extra=104, nn=T, cex=.9) # too much reduction!
+# predicting the data
+pred1 <- predict(dt3pr, newdata=testSet, type="class") # qualitative response
+head(pred1)
+pred2 <- predict(dt3pr, newdata=testSet, type="prob") # probability of deat and survival
+head(pred2)
+# checking accuracy - confusion matrix
+confusionMatrix(testSet$survived, pred1) # Accuracy : 0.8046 
+
+# creating regression tree - for continuos variables
+dt4 <- rpart(age ~., data=ptitanic, method="anova"); dt4 # anova for regression tree
+rpart.plot(dt4, nn=T, cex=.9) # age is in the top of the each node
+# predicting
+sample2 <- sample_frac(ptitanic, sixe=.1); head(sample2); dim(sample2)
+predAge <- predict(dt4, newdata = sample2, type="vector"); head(predAge)
+predict(dt4, newdata = sample2)
+sample2 <- cbind(sample2, predAge); head(sample2)
+caret::RMSE(sample2$age, predAge, na.rm=T) # 11.80699 - the lesser the better
 ```
 
+Section 18. Cluster Analysis
 
+An unsupervised machine learning technique.
 
+```{r s18}
+df <- mtcars[, c("mpg", "wt", "hp", "am")]
+df_dist <- dist(df); df_dist
+# hierarchical clustering
+hc <- hclust(df_dist)
+plot(hc)
+# cutting tree into 4 groups
+sub_hc <- cutree(hc, k=4)
+# number of memebers in each clusters
+table(sub_hc)
+# hclust using different methods: average, complete and single
+hc_average <- hclust(df_dist, method="average")
+plot(hc_average, hang=-1, cex=.8, main="Average linkage clustering: cluster nos")
+# cutting k clusters
+rect.hclust(hc_average, k=4, border=2:6)
+# cutting using height
+plot(hc_average, hang=-1, cex=.8, main="Average linkage clustering")
+rect.hclust(hc_average, h=100)
+# using both cutting methods
+plot(hc_average, hang=-1, cex=.8, main="Average linkage clustering")
+rect.hclust(hc_average, k=4, border=2:6)
+rect.hclust(hc_average, h=100)
 
+# k-means clustering
+pacman::p_load(dplyr, ggplot2)
+df <- mtcars[, c("mpg", "wt", "hp", "am")]
+km1 <- kmeans(df, centers=3); km1
+cbind(df,km1$cluster)
+df[km1$cluster==1,]
+df %>% filter(km1$cluster==2)
+table(km1$cluster)
+# finding the mean of variables based on clusters
+df %>% group_by(clusterNo=km1$cluster) %>% summarise_all(mean, na.rm=T)
+# plotting the clusters
+install.packages("factoextra"); library(factoextra)
+fviz_cluster(km1, data=df)
+# elbow method - to choose best number of clusters
+set.seed(123)
+fviz_nbclust(df, kmeans, method="wss") # with-in-sum-of-squares
+fviz_nbclust(df, kmeans, method="wss") + 
+  geom_vline(xintercept = 3, linetype=2) +
+  labs(subtitel="Elbow method")
+# NbClust method
+install.packages("NbClust"); library(NbClust)
+set.seed(1234)
+nc <- NbClust(df, distance="euclidean", min.nc=2, max.nc=6, method="kmeans") # 3 is the best number
+nc
+
+# if there is data where different variables contain different range of values, you need to scale the data to one
+marks1 <- c(65, 60, 70, 75, 67)
+marks2 <- c(95, 80, 52, 55, 57)
+project <- c(120, 100, 90, 80, 110)
+exam <- data.frame(marks1, marks2, project)
+exam_scaled <- scale(exam); exam_scaled # Z score scaling
+cl <- kmeans(exam_scaled, centers=2); cl$cluster
+cbind(exam, group=cl$cluster)
+```
