@@ -35,15 +35,196 @@ Week 2 Quiz
 # Q8 - ppois(10, lambda = 5*3) 0.1185
 ```
 
-Week 3 Quiz
+Week 3
 
-```{r week_3_quiz}
-# Q1 - 
-# Q2 - 
-# Q3 - 
-# Q4 - 
-# Q5 - 
-# Q6 - 
+```{r w3}
+# comparing the t and Z distributions
+library(manipulate)
+k <- 1000
+xvals <- seq(-5, 5, length = k)
+myplot <- function(df){
+  d <- data.frame(y = c(dnorm(xvals), dt(xvals, df)),
+                  x = xvals,
+                  dist = factor(rep(c("Normal", "T"), c(k,k))))
+  g <- ggplot(d, aes(x = x, y = y))
+  g <- g + geom_line(size = 2, aes(color = dist))
+  g
+}
+manipulate(myplot(mu), mu = slider(1, 20, step = 1)) # t distribution has thicker or heavier tails
+
+# comparing the upper quantiles of the t and Z densities
+pvals <- seq(.5, .99, by = .01)
+myplot2 <- function(df){
+  d <- data.frame(n= qnorm(pvals),t=qt(pvals, df),
+                  p = pvals)
+  g <- ggplot(d, aes(x= n, y = t))
+  g <- g + geom_abline(size = 2, col = "lightblue")
+  g <- g + geom_line(size = 2, col = "black")
+  g <- g + geom_vline(xintercept = qnorm(0.975))
+  g <- g + geom_hline(yintercept = qt(0.975, df))
+  g
+}
+manipulate(myplot2(df), df = slider(1, 20, step = 1)) # t intervals will be always wider that Z intervals
+
+# t confidence intervals example
+data(sleep); head(sleep)
+# paired observations are connected with a line; comparing subject specific differences when comparing acros the groups not the variations bwteen groups
+g1 <- sleep$extra[1:10]; g2 <- sleep$extra[11:20]
+difference <- g2 - g1
+mn <- mean(difference); s <- sd(difference); n <- 10
+# calculating 95% t confidence interval directly
+mn + c(-1, 1) * qt(.975, n-1)*s/sqrt(n)
+# using R's built in function
+t.test(difference)
+# using R's built in function, another format
+t.test(g2, g1, paired = TRUE)
+# using R's built in function, another format
+t.test(extra ~ I(relevel(group, 2)), paired = TRUE, data = sleep)
+
+# estimating pooled variance: comparing SBP for 8 oral contraceptive users (X) versus 21 controls (Y); mean of X is 132.86, sd of X is 15.34; mean of Y is 127.44, sd of Y is 18.23
+sp <- sqrt((7*15.34^2 + 20 * 18.23^2)/(8 + 21 - 2))
+132.86 - 127.44 + c(-1,1) * qt(.975, 27) * sp * (1 / 8 + 1 / 20)^.5 # independent group t interval
+
+# mistakenly treating the sleep data as grouped: different intervals for grouped vs paired! Because intersubject variability exusts!
+n1 <- length(g1); n2 <- length(g2)
+sp <- sqrt( ((n1 - 1) * sd(x1)^2 + (n2-1) * sd(x2)^2) / (n1 + n2-2))
+md <- mean(g2) - mean(g1)
+semd <- sp * sqrt(1 / n1 + 1/n2)
+rbind(md + c(-1, 1) * qt(.975, n1 + n2 - 2) * semd,
+      t.test(g2, g1, paired = FALSE, var.equal = TRUE)$conf,
+      t.test(g2, g1, paired = TRUE)$conf
+)
+
+# ChickWeight example
+library(datasets); data(ChickWeight); library(reshape2); library(dplyr)
+# defining weight gain or loss
+wideCW <- dcast(ChickWeight, Diet + Chick ~ Time, value.var = "weight")
+names(wideCW)[-(1 : 2)] <- paste("time", names(wideCW)[-(1 : 2)], sep = "")
+wideCW <- mutate(wideCW, gain = time21 - time0)
+# calculating t intervals
+wideCW14 <- subset(wideCW, Diet %in% c(1, 4))
+rbind(t.test(gain ~ Diet, paired = FALSE, var.equal = TRUE, data = wideCW14)$conf,
+      t.test(gain ~ Diet, paired = FALSE, var.equal = FALSE, data = wideCW14)$conf
+)
+
+# t test
+library(UsingR); data(father.son)
+t.test(father.son$sheight - father.son$fheight)
+# One Sample t-test
+#data: father.son$sheight - father.son$fheight
+#t = 11.79, df = 1077, p-value < 2.2e-16
+#alternative hypothesis: true mean is not equal to 0
+#95 percent confidence interval:
+#0.831 1.163
+#sample estimates:
+#mean of x
+#0.997
+
+# two group confidence intervals
+library(datasets); data(ChickWeight); library(reshape2); library(dplyr)
+# defining weight gain or loss
+wideCW <- dcast(ChickWeight, Diet + Chick ~ Time, value.var = "weight")
+names(wideCW)[-(1:2)] <- paste("time", names(wideCW)[-(1:2)], sep = "")
+wideCW <- mutate(wideCW, gain = time21 - time0)
+# Two sample t-test. Unequal variance T test comparing diets 1 and 4.
+wideCW14 <- subset(wideCW, Diet %in% c(1, 4))
+t.test(gain ~ Diet, paired = FALSE, var.equal = TRUE, data = wideCW14)
+# t = -2.7252 is an estimate that the difference in the average weight gain between the two diets less then hypethisied value 0. t statistics calculates how many standard estimated errors our difference in means is from hypothesised
+
+# p values
+pt(2.5, 15, lower.tail = FALSE)
+# if each gender has an independent 50% probability for each birth, what's the probability of gettting 7 or more girls out of 8 births?
+choose(8,7) * 0.5^8 + choose(8,8) * 0.5^8 # binomial calculations
+pbinom(6, size = 8, prob = 0.5, lower.tail = FALSE)
+```
+
+Week 3 Homework and Quiz
+
+```{r week_3_homework_and_quiz}
+## Homework
+# Q1
+t.test(mtcars$mpg) # 95 percent confidence interval: 17.91768 22.26357
+# Q2
+n = 9; sd = 1
+qt(.975, 8)
+y <- qt(.975, 8) * sd/sqrt(9) # 0.768668 for lower endpoint
+# Q3 - should be statistically independent
+# Q4
+head(mtcars)
+c4 <- mtcars$mpg[mtcars$cyl==4]; c6 <- mtcars$mpg[mtcars$cyl==6]
+t.test(c4, c6, var.equal = TRUE) # 3.154286 10.687272
+# Q5 - wide interval is better
+# Q6 - the interval is above 0 and 4 is better than 6 in the terms of MPG
 # Q7 - 
-# Q8 - 
+n1 <- 9; n2 <- 9
+sd1 <- 1.5; sd2 <- 1.8
+sp <- ((n1-1) * sd1^2 + (n2-1) * sd2^2) / (n1 + n2-2) # 2.745
+# Q8 - the proportion of successes
+# Q9 - assigning a prior probability distribution
+
+## Quiz
+# Q1 - 1077, 1123
+qt(.975, 8) # 1.859548
+sd <- 30
+semd <- sd/sqrt(9) 
+1100 + c(-1, 1) * qt(.975, 8) * semd # 1076.94 1123.06
+# Q2 - 2.60
+y <- -2; n = 9; qt(.975, 8)
+qt(.975, 8) * sd/3 = -2; sd <- abs(-6/qt(.975, 8)) # 2.60
+# Q3 - a paired interval
+# Q4 - -2.751649 -1.248351
+# interval for new system
+m_new <- 3
+sd_new <- sqrt(0.60); s_new = 0.60
+semd_new <- sd_new/sqrt(10) 
+m_new + c(-1, 1) * qt(.975, 9) * semd_new
+# interval for old system
+m_old <- 5
+sd_old <- sqrt(0.68); s_old <- 0.68
+semd_old <- sd_old/sqrt(10) 
+m_old + c(-1, 1) * qt(.975, 9) * semd_old
+# interval for both
+n1 <- 10; n2 <- 10
+sp <- sqrt(((n1 - 1) * s_new + (n2-1) * s_old) / (n1 + n2-2))
+md <- m_new - m_old
+semd <- sp * sqrt(1/n1 + 1/n2)
+md + c(-1, 1) * qt(.975, n1 + n2 - 2) * semd # -2.751649 -1.248351
+# Q5 - the interval will be narrower
+# Q6 - interval is above zero; the new system appears to be effective
+# substracting: new - old
+n1 <- n2 <- 100; m_new <- 4; m_old <- 6; sd_new <- 0.5; sd_old <- 2
+sp <- sqrt(((n1-1) * sd_new^2 + (n2-1) * sd_old^2) / (n1 + n2-2))
+md <- m_new - m_old
+semd <- sp * sqrt(1/n1 + 1/n2)
+md + c(-1, 1) * qt(.975, n1 + n2 - 2) * semd
+# calculating degrees of freedom
+df <- ((sd_new^4/n1 + sd_old^4/n2)^2)/((((sd_new^4/n1)^2)/(n1-1))+(((sd_old^4/n2)^2)/(n2-1)))
+md + c(-1, 1) * qt(.975, df) * semd # -2.409018 -1.590982
+# substracting: old - new
+n_new <- n_old <- 100; m_new <- 4; m_old <- 6; sd_new <- 0.5; sd_old <- 2
+sp <- sqrt(((n_old-1) * sd_old^2 + (n_new-1) * sd_new^2) / (n_old + n_new-2))
+md <- m_old - m_new
+semd <- sp * sqrt(1/n_old + 1/n_new)
+md + c(-1, 1) * qt(.975, n_old + n_new - 2) * semd
+# calculating degrees of freedom
+df <- ((sd_old^4/n_old + sd_new^4/n_new)^2)/((((sd_old^4/n_old)^2)/(n_old-1))+(((sd_new^4/n_new)^2)/(n_new-1)))
+md + c(-1, 1) * qt(.975, df) * semd # 1.590982 2.409018
+# Q7 - -5.364, -2,636
+n_tr <- n_pl <- 9; m_tr <- 3; m_pl <- 1; sd_tr <- 1.5; sd_pl <- 1.8
+sp <- sqrt(((n_tr-1) * sd_tr^2 + (n_pl-1) * sd_pl^2) / (n_tr + n_pl-2))
+md <- m_tr - m_pl
+semd <- sp * sqrt(1/n_tr + 1/n_pl)
+df <- ((sd_tr^4/n_tr + sd_pl^4/n_pl)^2)/((((sd_tr^4/n_tr)^2)/(n_tr-1))+(((sd_pl^4/n_pl)^2)/(n_pl-1)))
+md + c(-1, 1) * qt(.95, df) * semd # -3.3738562 -0.6261438
+
+n_tr <- n_pl <- 9; m_tr <- 3; m_pl <- 1; sd_tr <- 1.5; sd_pl <- 1.8
+sp <- sqrt(((n_tr-1) * sd_tr^2 + (n_pl-1) * sd_pl^2) / (n_tr + n_pl-2))
+#sp <- sqrt((sd_pl^2/n_pl) + (sd_tr^2/n_tr))
+#sp <- (1/n_pl + 1/n_tr)^.5 * ((n_pl-1)*sd_pl^2 + (n_tr-1)*sd_tr^2)/(n_pl+n_tr-2)
+#sp <- ((n_tr-1) * sd_tr^2 + (n_pl-1) * sd_pl^2) / (n_tr + n_pl-2)
+md <- m_pl - m_tr
+sp <- sqrt(((n_tr-1) * sd_tr^2 + (n_pl-1) * sd_pl^2) / (n_tr + n_pl-2))
+semd <- sp * sqrt(sd_tr^4/n_tr + sd_pl^4/n_pl)
+df <- ((sd_tr^4/n_tr + sd_pl^4/n_pl)^2)/((((sd_tr^4/n_tr)^2)/(n_tr-1))+(((sd_pl^4/n_pl)^2)/(n_pl-1)))
+md + c(-1, 1) * qt(.95, df) * semd # -4.3129236  0.3129236
 ```
