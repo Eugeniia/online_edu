@@ -140,7 +140,7 @@ pbinom(6, size = 8, prob = 0.5, lower.tail = FALSE)
 
 Week 3 Homework and Quiz
 
-```{r week_3_homework_and_quiz}
+```{r w3_homework_and_quiz}
 ## Homework
 # Q1
 t.test(mtcars$mpg) # 95 percent confidence interval: 17.91768 22.26357
@@ -210,21 +210,149 @@ md + c(-1, 1) * qt(.975, n_old + n_new - 2) * semd
 df <- ((sd_old^4/n_old + sd_new^4/n_new)^2)/((((sd_old^4/n_old)^2)/(n_old-1))+(((sd_new^4/n_new)^2)/(n_new-1)))
 md + c(-1, 1) * qt(.975, df) * semd # 1.590982 2.409018
 # Q7 - -5.364, -2,636
-n_tr <- n_pl <- 9; m_tr <- 3; m_pl <- 1; sd_tr <- 1.5; sd_pl <- 1.8
+n_tr <- n_pl <- 9; m_tr <- -3; m_pl <- 1; sd_tr <- 1.5; sd_pl <- 1.8
 sp <- sqrt(((n_tr-1) * sd_tr^2 + (n_pl-1) * sd_pl^2) / (n_tr + n_pl-2))
 md <- m_tr - m_pl
 semd <- sp * sqrt(1/n_tr + 1/n_pl)
 df <- ((sd_tr^4/n_tr + sd_pl^4/n_pl)^2)/((((sd_tr^4/n_tr)^2)/(n_tr-1))+(((sd_pl^4/n_pl)^2)/(n_pl-1)))
-md + c(-1, 1) * qt(.95, df) * semd # -3.3738562 -0.6261438
-
-n_tr <- n_pl <- 9; m_tr <- 3; m_pl <- 1; sd_tr <- 1.5; sd_pl <- 1.8
-sp <- sqrt(((n_tr-1) * sd_tr^2 + (n_pl-1) * sd_pl^2) / (n_tr + n_pl-2))
-#sp <- sqrt((sd_pl^2/n_pl) + (sd_tr^2/n_tr))
-#sp <- (1/n_pl + 1/n_tr)^.5 * ((n_pl-1)*sd_pl^2 + (n_tr-1)*sd_tr^2)/(n_pl+n_tr-2)
-#sp <- ((n_tr-1) * sd_tr^2 + (n_pl-1) * sd_pl^2) / (n_tr + n_pl-2)
-md <- m_pl - m_tr
-sp <- sqrt(((n_tr-1) * sd_tr^2 + (n_pl-1) * sd_pl^2) / (n_tr + n_pl-2))
-semd <- sp * sqrt(sd_tr^4/n_tr + sd_pl^4/n_pl)
-df <- ((sd_tr^4/n_tr + sd_pl^4/n_pl)^2)/((((sd_tr^4/n_tr)^2)/(n_tr-1))+(((sd_pl^4/n_pl)^2)/(n_pl-1)))
-md + c(-1, 1) * qt(.95, df) * semd # -4.3129236  0.3129236
+md + c(-1, 1) * qt(.95, df) * semd # -5.373856 -2.626144
+md + c(-1, 1) * qt(.95, 16) * semd # -5.363579 -2.636421
 ```
+
+Week 4
+
+```{r w4}
+# calculating power for Gaussian dat
+alpha = 0.05; z <- qnorm(1 - alpha)
+pnorm(mu0 + z*sigma/sqrt(n), mean=mua, sd=sigma/sqrt(n), lower.tail = FALSE)
+
+# example
+mu0 = 30; mua = 32; sigma = 4; n = 16; alpha = 0.05
+z <- qnorm(1 - alpha)
+pnorm(mu0 + z*sigma/sqrt(n), mean=mua, sd=sigma/sqrt(n), lower.tail = FALSE)
+
+# investigating power
+library(manipulate)
+mu0 = 30
+myplot <- function(sigma, mua, n, alpha) {
+  g = ggplot(data.frame(mu = c(27, 36)), aes(x = mu))
+  g = g + stat_function(fun = dnorm, geom = "line", args = list(mean = mu0,
+                                                                sd = sigma/sqrt(n)), size = 2, 
+                        col = "red")
+  g = g + stat_function(fun = dnorm, geom = "line", args = list(mean = mua,
+                                                                sd = sigma/sqrt(n)), size = 2, 
+                        col = "blue")
+  xitc = mu0 + qnorm(1 - alpha) * sigma/sqrt(n)
+  g = g + geom_vline(xintercept = xitc, size = 3)
+  g
+}
+manipulate(myplot(sigma, mua, n, alpha), sigma = slider(1, 10, step = 1, initial= 4),
+           mua = slider(30, 35, step = 1, initial = 32), n = slider(1, 50, step = 1, initial = 16), 
+           alpha = slider(0.01, 0.1, step = 0.01, initial = 0.05))
+
+# T test power; delta is the difference in the means
+# omitting the power and getting a power estimate
+power.t.test(n = 16, delta = 2/4, sd = 1, type = "one.sample", alt = "one.sided")$power
+# illustrating that it depends only on the effect size which is delta/sd
+power.t.test(n = 16, delta = 2, sd = 4, type = "one.sample", alt = "one.sided")$power
+# same thing again
+power.t.test(n = 16, delta = 100, sd = 200, type = "one.sample", alt = "one.sided")$power
+# specifying the power and getting n
+power.t.test(power = 0.8, delta = 2/4, sd = 1, type = "one.sample", alt = "one.sided")$n
+# again illustrating that the effect size is all that matters
+power.t.test(power = 0.8, delta = 2, sd = 4, type = "one.sample", alt = "one.sided")$n
+# again illustrating that the effect size is all that matters
+power.t.test(power = 0.8, delta = 100, sd = 200, type = "one.sample", alt = "one.sided")$n
+# specifying the power and n, and getting delta
+power.t.test(power = 0.8, n = 100, sd = 1, type = "one.sample", alt = "one.sided")$delta
+
+# Multiple testing
+# case study 1: no true positives
+set.seed(1234)
+pValues <- rep(NA, 1000)
+for(i in 1:1000){
+  y <- rnorm(20)
+  x <- rnorm(20)
+  pValues[i] <- summary(lm(y ~ x))$coeff[2,4]
+}
+sum(pValues < 0.05)
+# controlling FWER
+sum(p.adjust(pValues, method="bonferroni") < 0.05)
+# controlling FDR
+sum(p.adjust(pValues, method="BH") < 0.05)
+
+# case study 2: 50% true positives
+set.seed(1234)
+pValues <- rep(NA, 1000)
+for(i in 1:1000){
+  y <- rnorm(20)
+  if(i <= 500){y <- rnorm(20)}else{y <- rnorm(20, mean=2*x)}
+  pValues[i] <- summary(lm(y ~ x))$coeff[2,4]
+}
+trueStatus <- rep(c("zero", "not_zero"), each=500)
+table(pValues < 0.05, trueStatus)
+# controlling FWER
+sum(p.adjust(pValues, method="bonferroni") < 0.05) # 500 true false positives
+table(p.adjust(pValues, method="bonferroni") < 0.05, trueStatus)
+# controlling FDR
+sum(p.adjust(pValues, method="BH") < 0.05) # 9 extra false positives!
+table(p.adjust(pValues, method="BH") < 0.05, trueStatus)
+
+# p-values vs adjusted p-values
+par(mfrow=c(1,2))
+plot(pValues, p.adjust(pValues, method="bonferroni"), pch=19)
+plot(pValues, p.adjust(pValues, method="BH"), pch=19)
+
+# resampling
+# bootstrapping
+library(UsingR); data(father.son)
+x <- father.son$sheight
+n <- length(x)
+B <- 10000
+resamples <- matrix(sample(x, n * B, replace = TRUE), B, n)
+resampledMedians <- apply(resamples, 1, median)
+# nonparametric bootstrapping
+B <- 10000
+resamples <- matrix(sample(x, n * B, replace = TRUE), B, n)
+medians <- apply(resamples, 1, median)
+sd(medians) # calculating stadnard deviations of the medians to estimate standard error of median
+quantile(medians, c(.025, .975)) # # percentiles as a confidence interval for median
+g = ggplot(data.frame(medians = medians), aes(x = medians))
+g = g + geom_histogram(color = "black", fill = "lightblue", binwidth = 0.05)
+g
+
+# permutation test
+data(InsectSprays)
+g = ggplot(InsectSprays, aes(spray, count, fill = spray))
+g = g + geom_boxplot()
+g
+# permutation for groups B and C
+subdata <- InsectSprays[InsectSprays$spray %in% c("B", "C"),]
+y <- subdata$count
+group <- as.character(subdata$spray)
+testStat <- function(w, g) mean(w[g=="B"]) - mean(w[g=="C"])
+observedStat <- testStat(y, group)
+permutations <- sapply(1:10000, function(i) testStat(y, sample(group)))
+observedStat
+# proportion of times we got a simulated statistic larger than our observed statistic
+mean(permutations > observedStat)
+```
+
+Week 4 Homework and Quiz
+
+```{r w4_homework_and_quiz}
+## Homework
+# Q1 - 
+
+
+# Q2 - 
+
+
+## Quiz
+# Q1 - 
+
+# Q2 - 
+
+```
+
+
