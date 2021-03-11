@@ -149,13 +149,13 @@ n = 9; sd = 1
 qt(.975, 8)
 y <- qt(.975, 8) * sd/sqrt(9) # 0.768668 for lower endpoint
 # Q3 - should be statistically independent
-# Q4
+# Q4 - 3.154286 10.687272
 head(mtcars)
 c4 <- mtcars$mpg[mtcars$cyl==4]; c6 <- mtcars$mpg[mtcars$cyl==6]
 t.test(c4, c6, var.equal = TRUE) # 3.154286 10.687272
 # Q5 - wide interval is better
 # Q6 - the interval is above 0 and 4 is better than 6 in the terms of MPG
-# Q7 - 
+# Q7 - 2.745
 n1 <- 9; n2 <- 9
 sd1 <- 1.5; sd2 <- 1.8
 sp <- ((n1-1) * sd1^2 + (n2-1) * sd2^2) / (n1 + n2-2) # 2.745
@@ -342,16 +342,119 @@ Week 4 Homework and Quiz
 
 ```{r w4_homework_and_quiz}
 ## Homework
-# Q1 - 
-
-
-# Q2 - 
-
+# Q1 - 21.84309
+mn <- mean(mtcars$mpg); s <- sd(mtcars$mpg); z <- qnorm(.05)
+mu0 <- mn - z*s/sqrt(nrow(mtcars)); mu0
+# Q2 - rejecting and p-value = 0.0004048
+c4 <- mtcars$mpg[mtcars$cyl==4]; c6 <- mtcars$mpg[mtcars$cyl==6]
+t.test(c4, c6, var.equal = FALSE, paired=FALSE, alternative = "two.sided")
+# Q3 - 2.784404 3.215596
+n <- 100; mn <- 3; sd <- 1.1; semd <- sd/sqrt(n) 
+mn + c(-1, 1) * qnorm(.975) * semd # 2.784404 3.215596
+# Q4 - rejecting, p-value 0.1841008
+# Ho: p=.5 Ha: p>.5
+pbinom(54, size=100, prob=.5, lower.tail=FALSE) # 0.1841008
+pnorm(.55, mean=.5, sd=sqrt(.5*.5/100), lower.tail=FALSE) # 0.1586553
+# Q5 - p-value 0.05533114, 0 - not rejecting Ho
+# Ho: mn=520 Ha: mn>520 per day
+ppois(15800-1, lambda=520*30, lower.tail=FALSE) # 0.05533114
+pnorm(15800, mean=520*30, sd=sqrt(520*30), lower.tail=FALSE) # 0.05465729 for normal approximation
+# Q6 - p-value 0.07709987, 1 - for rejecting Ho
+# AB test or randomized trial or treatment/control
+# Ho: theris no difference so mo=0 Ha: ther is a difference
+m1 <- 10; m2 <- 11; md <- 10 - 11; sp <- 4; semn <- 4*sqrt(1/100 + 1/100); mo = 0
+z <- (md - mo)/semn; z # how many standard errors away from 0 was our observed difference
+pnorm(z)
+2 * pnorm(z) # for two-sided test
+# Q7 - 0.8037244
+# Ho: mu = 10, Ha: mu > 10, n = 100, sd = 4
+# m ~ N(10, 4/sqrt(100)) under the Ho
+# reject if m > 10 + 1.645* .4 # .4 is a standard error
+# m ~ N(11, .4) under Ha
+m <- 10 + 1.645* .4
+pnorm(m, mean=11, sd=.4, lower.tail = FALSE) # 0.8037244
+# Q8 - 99
+# Ho: mu=0 Ha: mu>0, sd=0.04, power=80%, mua = 0.01
+# m ~ N(0, sd=0.04/sqrt(n)) under Ho
+# reject Ho if m > 0 + 1.645*0.04/sqrt(n)
+1.645*0.04
+n = 10
+pnorm(0.0658/sqrt(n), mean=0.01, sd=0.04/sqrt(n), lower.tail = F) # if n = 10 power is 0.1853935
+n = 1000
+pnorm(0.0658/sqrt(n), mean=0.01, sd=0.04/sqrt(n), lower.tail = F) # if n = 1000 power is 1
+n = 500
+pnorm(0.0658/sqrt(n), mean=0.01, sd=0.04/sqrt(n), lower.tail = F) # if n = 500 power is 0.9999601
+n = 250
+pnorm(0.0658/sqrt(n), mean=0.01, sd=0.04/sqrt(n), lower.tail = F) # if n = 250 power is 0.9894962
+n = 100
+pnorm(0.0658/sqrt(n), mean=0.01, sd=0.04/sqrt(n), lower.tail = F) # if n = 100 power is 0.8037244
+n = 99
+pnorm(0.0658/sqrt(n), mean=0.01, sd=0.04/sqrt(n), lower.tail = F) # if n = 99 power is 0.8002371
+n <- (qnorm(.95) + qnorm(.8))^2 * .04^2/.01^2 # 99
+# Q9 - more innocent people will be convicted
+# Q10 - 0, 0, 2.27, 1 - for rejecting Ho
+m6 <- mtcars$mpg[mtcars$cyl==6]; m8 <- mtcars$mpg[mtcars$cyl==8]
+p <- t.test(m6, m8, var.equal = TRUE) # t = 4.419, df = 19, p-value = 0.0002947
+2 * pnorm(-4.419) # for z-test, where -4.419 is a negative t statistic
+mn6 <- mean(m6); mn8 <- mean(m8)
+s6 <- sd(m6); s8 <- sd(m8)
+n6 <- length(m6); n8 <- length(m8)
+sp <- sqrt(((n6-1)*s6^2 + (n8-1) * s8^2)/(n6 + n8 -2)); sp # 2.269676
+z <- (mn6 - mn8)/(sp* sqrt(1/n6 + 1/n8)); z # 4.419009
 
 ## Quiz
-# Q1 - 
+# Q1 - p-value = 0.08652
+base <- c(140,138,150,148,135); tr <- c(132,135,151,146,130)
+t.test(base, tr, var.equal = FALSE, paired=TRUE, alternative = "two.sided")
+# Q2 - 1077 to 1123
+n <- 9; mn <- 1100; sd <- 30; semd <- sd/sqrt(n) 
+mn + c(-1, 1) * qnorm(.975) * semd # 1080.4 1119.6
+mn + c(-1, 1) * qt(.975, 8) * semd # 1076.94 1123.06 where 8 is degrees of freedom
+# Q3 - 0.31
+pbinom(2, size=4, prob=.5, lower.tail=FALSE) # 0.3125
+# Q4 - 0.03
+# Ho: infection rate = 0.01 Ha: infection rate =< 0.01
+# lower.tail if TRUE (default), probabilities are P[X ≤ x], otherwise, P[X > x].
+ppois(10-1, lambda=0.01*1787, lower.tail=TRUE) # 0.01649922
+ppois(10, lambda=0.01*1787, lower.tail=TRUE) # 0.03237153
+pnorm(10, mean=0.01*1787, sd=sqrt(0.01*1787), lower.tail=TRUE) # 0.03132186 for normal approximation
+# Q5 - 3.031546e-07 is less than 0.01
+# Ho: theris no difference so mo=0 Ha: ther is a difference
+n_tr <- n_pl <- 9; m_tr <- -3; m_pl <- 1; sd_tr <- 1.5; sd_pl <- 1.8
+sp <- sqrt(((n_tr-1) * sd_tr^2 + (n_pl-1) * sd_pl^2) / (n_tr + n_pl-2))
+semd <- sp * sqrt(1/n_tr + 1/n_pl)
+md <- m_tr - m_pl; mo <- 0
+z <- (md - mo)/semd; z # how many standard errors away from 0 was our observed difference
+pnorm(z)
+2 * pnorm(z) # 3.031546e-07 for two-sided test
+# Q6 - No you wouldn't reject two-sided 5% hypothesis because 1.078 is within 90% confidence interval of 1077 to 1123
+# Q7 - 0.80
+# Ho: mu=0 Ha: mu>0, sd=0.04, n=100, mua = 0.01
+# m ~ N(0, sd=0.04/sqrt(n)) under Ho
+# reject Ho if m > 0 + 1.645*0.04/sqrt(n)
+s <- 0.04
+n <- 100
+pnorm(1.645*s/sqrt(n), mean=0.01, sd=0.04/sqrt(n), lower.tail = F) # if n = 100 power is 0.8037244
+# Q8 - 140
+# Ho: mu=0 Ha: mu>0, sd=0.04, power=90%, mua = 0.01
+# m ~ N(0, sd=0.04/sqrt(n)) under Ho
+# reject Ho if m > 0 + 1.645*0.04/sqrt(n)
+1.645*0.04
+n = 10
+pnorm(0.0658/sqrt(n), mean=0.01, sd=0.04/sqrt(n), lower.tail = F) # if n = 10 power is 0.1853935
+n = 1000
+pnorm(0.0658/sqrt(n), mean=0.01, sd=0.04/sqrt(n), lower.tail = F) # if n = 1000 power is 1
+n = 500
+pnorm(0.0658/sqrt(n), mean=0.01, sd=0.04/sqrt(n), lower.tail = F) # if n = 500 power is 0.9999601
+n = 140
+pnorm(0.0658/sqrt(n), mean=0.01, sd=0.04/sqrt(n), lower.tail = F) # if n = 140 power is 0.9054152
+n <- (qnorm(.95) + qnorm(.9))^2 * .04^2/.01^2 # 137
+# Q9 - increasing alpha will increase the power
+```
 
-# Q2 - 
+Week 4 Course Project
+
+```{r w4_course_project}
 
 ```
 
