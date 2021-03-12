@@ -451,11 +451,3 @@ pnorm(0.0658/sqrt(n), mean=0.01, sd=0.04/sqrt(n), lower.tail = F) # if n = 140 p
 n <- (qnorm(.95) + qnorm(.9))^2 * .04^2/.01^2 # 137
 # Q9 - increasing alpha will increase the power
 ```
-
-Week 4 Course Project
-
-```{r w4_course_project}
-
-```
-
-
