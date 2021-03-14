@@ -1,0 +1,150 @@
+---
+title: "Regression Models"
+author: "Evgeniia Golovina"
+date: "13/03/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Regression Models course (Coursera)
+
+Week 1
+
+```{r w1}
+# Galton's data, plotting the the marginal (parents disregarding children and children disregarding parents) distributions of height
+library(UsingR); data(galton); library(reshape); long <- melt(galton)
+g <- ggplot(long, aes(x = value, fill = variable))
+g <- g + geom_histogram(colour = "black", binwidth=1)
+g <- g + facet_grid(. ~ variable); g
+
+# manipulating to see what value of mu minimizes the sum of the squared deviations. It is mu = 68
+library(manipulate)
+myHist <- function(mu){
+  mse <- mean((galton$child - mu)^2)
+  g <- ggplot(galton, aes(x = child)) + geom_histogram(fill = "salmon", colour = "black", binwidth=1)
+  g <- g + geom_vline(xintercept = mu, size = 3)
+  g <- g + ggtitle(paste("mu = ", mu, ", MSE = ", round(mse, 2), sep = ""))
+  g
+}
+manipulate(myHist(mu), mu = slider(62, 74, step = 0.5))
+
+# showing the empirical mean
+g <- ggplot(galton, aes(x = child)) + geom_histogram(fill = "salmon", colour = "black", binwidth=1)
+g <- g + geom_vline(xintercept = mean(galton$child), size = 3)
+g
+
+# comparing children’s heights and their parent’s heights
+ggplot(galton, aes(x = parent, y = child)) + geom_point()
+
+# regression through the origin
+library(dplyr)
+y <- galton$child - mean(galton$child)
+x <- galton$parent - mean(galton$parent)
+freqData <- as.data.frame(table(x, y))
+names(freqData) <- c("child", "parent", "freq")
+freqData$child <- as.numeric(as.character(freqData$child))
+freqData$parent <- as.numeric(as.character(freqData$parent))
+myPlot <- function(beta){
+  g <- ggplot(filter(freqData, freq > 0), aes(x = parent, y = child))
+  g <- g + scale_size(range = c(2, 20), guide = "none" )
+  g <- g + geom_point(colour="grey50", aes(size = freq+20), show.legend = FALSE)
+  g <- g + geom_point(aes(colour=freq, size = freq))
+  g <- g + scale_colour_gradient(low = "lightblue", high="white")
+  g <- g + geom_abline(intercept = 0, slope = beta, size = 3)
+  mse <- mean( (y - beta * x) ^2 )
+  g <- g + ggtitle(paste("beta = ", beta, "mse = ", round(mse, 3)))
+  g
+}
+manipulate(myPlot(beta), beta = slider(0.6, 1.2, step = 0.02))
+# the solution
+lm(I(child - mean(child)) ~ I(parent - mean(parent)) - 1, data = galton)
+
+# fitting galton's data using linear regression
+y <- galton$child; x <- galton$parent
+beta1 <- cor(y, x) * sd(y) / sd(x)
+beta0 <- mean(y) - beta1 * mean(x)
+rbind(c(beta0, beta1), coef(lm(y ~ x))) # got the same results :)
+
+# reversing the outcome/predictor relationship
+beta1 <- cor(y, x) * sd(x) / sd(y)
+beta0 <- mean(x) - beta1 * mean(y)
+rbind(c(beta0, beta1), coef(lm(x ~ y))) # got the same results :)
+
+# regression through the origin yields an equivalent slope if you center the data first
+yc <- y - mean(y); xc <- x - mean(x)
+beta1 <- sum(yc * xc) / sum(xc ^ 2)
+c(beta1, coef(lm(y ~ x))[2]) # the same numbers
+lm(yc ~ xc -1) # to get slope estimate
+
+# normalizing variables results in the slope being the correlation
+yn <- (y - mean(y))/sd(y); xn <- (x - mean(x))/sd(x)
+sd(yn); sd(xn) # both should be 1
+c(cor(y, x), cor(yn, xn), coef(lm(yn ~ xn))[2]) # the same numbers
+
+# regression to the mean
+x <- rnorm(100); y <- rnorm(100)
+odr <- order(x)
+x[odr[100]]; y[odr[100]]
+
+library(UsingR); library(ggplot2)
+data(father.son)
+y <- (father.son$sheight - mean(father.son$sheight)) / sd(father.son$sheight)
+x <- (father.son$fheight - mean(father.son$fheight)) / sd(father.son$fheight)
+rho <- cor(x, y)
+g = ggplot(data.frame(x, y), aes(x = x, y = y))
+g = g + geom_point(size = 5, alpha = .2, colour = "black")
+g = g + geom_point(size = 4, alpha = .2, colour = "red")
+g = g + geom_vline(xintercept = 0)
+g = g + geom_hline(yintercept = 0)
+g = g + geom_abline(position = "identity")
+g = g + geom_abline(intercept = 0, slope = rho, size = 2)
+g = g + geom_abline(intercept = 0, slope = 1 / rho, size = 2)
+g = g + xlab("Father's height, normalized")
+g = g + ylab("Son's height, normalized")
+g
+```
+
+Week 1 Quiz
+
+```{r _w1_quiz}
+# Q1 - 0.1471429
+x <- c(0.18, -1.54, 0.42, 0.95)
+w <- c(2, 1, 3, 1) # weights
+mean(x); sum(x)/4 # without weights
+sum(x*w)/sum(w) # with weights 0.1471429
+# Q2 - 0.8263
+x <- c(0.8, 0.47, 0.51, 0.73, 0.36, 0.58, 0.57, 0.85, 0.44, 0.42)
+y <- c(1.39, 0.72, 1.55, 0.48, 1.19, -1.59, 1.23, -0.65, 1.49, 0.05)
+lm(y ~ x) # -1.713
+lm(y ~ x - 1) # getting the slope estimate of 0.8263
+# Q3 - -5.344
+lm(mtcars$mpg ~ mtcars$wt - 1) # 5.292
+lm(mtcars$mpg ~ mtcars$wt) # -5.344
+# Q4 - 1
+# Q5 - 0.6
+# Q6 - -0.9718658
+x <- c(8.58, 10.46, 9.01, 9.64, 8.86)
+mean(x)
+x_norm <- (x - mean(x))/sd(x); x_norm # the first value is -0.9718658
+# Q7 - 1.567
+x <- c(0.8, 0.47, 0.51, 0.73, 0.36, 0.58, 0.57, 0.85, 0.44, 0.42)
+y <- c(1.39, 0.72, 1.55, 0.48, 1.19, -1.59, 1.23, -0.65, 1.49, 0.05)
+lm(y~x) # 1.567
+# Q8 - It must be identically 0.
+# Q9 - 0.573
+x <- c(0.8, 0.47, 0.51, 0.73, 0.36, 0.58, 0.57, 0.85, 0.44, 0.42)
+mean(x) # 0.573
+# Q10 - Var(Y)/Var(X)
+```
+
+Week 2
+
+```{r w2}
+
+
+```
+
+
