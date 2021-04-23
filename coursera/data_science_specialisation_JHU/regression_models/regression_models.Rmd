@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Regression Models course (Coursera)
 
-Week 1
+Week 1. Least squares and linear regression
 
 ```{r w1}
 # Galton's data, plotting the the marginal (parents disregarding children and children disregarding parents) distributions of height
@@ -140,9 +140,37 @@ mean(x) # 0.573
 # Q10 - Var(Y)/Var(X)
 ```
 
-Week 2
+Week 2. Linear regression & Multivariable regression
 
 ```{r w2}
+library(UsingR); data(diamond); library(ggplot2)
+g = ggplot(diamond, aes(x = carat, y = price))
+g = g + xlab("Mass (carats)")
+g = g + ylab("Price (SIN $)")
+g = g + geom_point(size = 7, colour = "black", alpha=0.5)
+g = g + geom_point(size = 5, colour = "blue", alpha=0.2)
+g = g + geom_smooth(method = "lm", colour = "black")
+g
+
+# price is Y, carat is X
+fit <- lm(price ~ carat, data = diamond)
+coef(fit) # We estimate an expected 3721.02 (SIN) dollar increase in price for every carat increase in mass of diamond. The intercept -259.63 is the expected price of a 0 carat diamond.
+
+# We’re not interested in 0 carat diamonds (it’s hard to get a good price for them ;-).
+# centering X variable (carat)
+fit2 <- lm(price ~ I(carat - mean(carat)), data = diamond)
+coef(fit2) # 500.1, is the expected price for the average sized diamond of the data (0.2042 carats). Notice the estimated slope didn’t change at all.
+
+# a one carat increase in a diamond is pretty big. What about changing units to 1/10th of a carat? We can just do this by just dividing the coefficient by 10, no need to refit the model
+fit3 <- lm(price ~ I(carat * 10), data = diamond)
+coef(fit3) # We expect a 372.102 (SIN) dollar change in price for every 1/10th of a carat increase in mass of diamond.
+
+# let’s predict the price of a diamond
+newx <- c(0.16, 0.27, 0.34)
+coef(fit)[1] + coef(fit)[2] * newx
+# or using predict function
+predict(fit, newdata = data.frame(carat = newx))
+
 
 
 ```
