@@ -143,6 +143,7 @@ mean(x) # 0.573
 Week 2. Linear regression & Multivariable regression
 
 ```{r w2}
+## Statistical linear regression models
 library(UsingR); data(diamond); library(ggplot2)
 g = ggplot(diamond, aes(x = carat, y = price))
 g = g + xlab("Mass (carats)")
@@ -170,6 +171,47 @@ newx <- c(0.16, 0.27, 0.34)
 coef(fit)[1] + coef(fit)[2] * newx
 # or using predict function
 predict(fit, newdata = data.frame(carat = newx))
+
+## Residuals
+library(UsingR); data(diamond)
+y <- diamond$price; x <- diamond$carat; n <- length(y)
+fit <- lm(y ~ x)
+e <- resid(fit) # the easiest way to get the residuals
+yhat <- predict(fit) # obtain the residuals manually, get the predicted Ys first
+# the residuals are y - yhat. Let's check by comparing this with R's build in resid function
+max(abs(e -(y - yhat))) # 9.485746e-13
+# let's do it again hard coding the calculation of Yhat
+max(abs(e - (y - coef(fit)[1] - coef(fit)[2] * x))) # 9.485746e-13
+# sum of the residuals is close to 0
+sum(e); sum(e * x)
+# residual plot
+g <- ggplot(data.frame(x = x, y = resid(lm(y ~ x))),aes(x = x, y = y))
+g <- g + geom_hline(yintercept = 0, size = 2);
+g <- g + geom_point(size = 7, colour = "black", alpha = 0.4);
+g <- g + geom_point(size = 5, colour = "red", alpha = 0.4);
+g <- g + xlab("X") + ylab("Residual")
+g
+# finding residual variance estimates
+y <- diamond$price; x <- diamond$carat; n <- length(y)
+fit <- lm(y ~ x)
+summary(fit)
+summary(fit)$sigma #the estimate from lm is 31.84052
+# directly calculating from the residuals
+sqrt(sum(resid(fit)^2) / (n - 2)) # 31.84052
+# the variation explained by a model with an intercept only (representing total variation) and then the mass is included as a linear predictor. Notice how much the variation decreases when including the diamond mass
+e = c(resid(lm(price ~ 1, data = diamond)),
+resid(lm(price ~ carat, data = diamond)))
+fit = factor(c(rep("Itc", nrow(diamond)),
+rep("Itc, slope", nrow(diamond))))
+g = ggplot(data.frame(e = e, fit = fit), aes(y = e, x = fit, fill = fit))
+g = g + geom_dotplot(binaxis = "y", size = 2, stackdir = "center", binwidth = 20)
+g = g + xlab("Fitting approach")
+g = g + ylab("Residual price")
+g
+# R squared doesn’t tell the whole story about model fit.
+data(anscombe); example(anscombe)
+
+## Regression inference
 
 
 
