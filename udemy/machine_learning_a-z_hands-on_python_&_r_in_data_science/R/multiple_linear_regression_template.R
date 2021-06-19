@@ -21,8 +21,41 @@ test_set = subset(dataset, split == FALSE)
 # test_set = scale(test_set)
 
 # Fitting Multiple Linear Regression to the Training set
-regressor = lm(formula = Profit ~ .,
-               data = training_set)
+regressor = lm(formula = Profit ~ ., data = training_set)
+summary(regressor)
 
 # Predicting the Test set results
 y_pred = predict(regressor, newdata = test_set)
+#y_pred
+
+# Building the optimal model using Backward Elimination
+regressor = lm(formula = Profit ~ R.D.Spend + Administration + Marketing.Spend + State, data = dataset)
+summary(regressor)
+
+regressor = lm(formula = Profit ~ R.D.Spend + Administration + Marketing.Spend, data = dataset)
+summary(regressor) # without State predictor
+
+regressor = lm(formula = Profit ~ R.D.Spend + Marketing.Spend, data = dataset)
+summary(regressor) # without State and Administration predictors
+
+regressor = lm(formula = Profit ~ R.D.Spend, data = dataset)
+summary(regressor) # without State, Administration and Marketing.Spend predictors
+
+# Building an automatic implementation of Backward Elimination
+backwardElimination <- function(x, s1){
+  numVars = length(x)
+  for (i in c(1:numVars)){
+    regressor = lm(formula = Profit ~ ., data = x)
+    maxVar = max(coef(summary(regressor))[c(2:numVars), "Pr(>|t|)"])
+    if (maxVar > s1){
+      j = which(coef(summary(regressor))[c(2:numVars), "Pr(>|t|)"] == maxVar)
+      x = x[, -j]
+    }
+    numVars = numVars - 1
+  }
+  return(summary(regressor))
+}
+
+SL = 0.05
+dataset = dataset[, c(1,2,3,4,5)]
+backwardElimination(training_set, SL)
