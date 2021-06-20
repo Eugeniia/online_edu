@@ -238,4 +238,10 @@ fit <- lm(y ~ x); summary(fit)$coefficients
 
 ```
 
+Week 2 Quiz
+
+```{r _w1_quiz}
+# Q1 - 
+
+```
 

@@ -17,8 +17,7 @@ dataset = dataset[2:3]
 # test_set = scale(test_set)
 
 # Fitting Linear Regression to the dataset
-lin_reg = lm(formula = Salary ~ .,
-             data = dataset)
+lin_reg = lm(formula = Salary ~ ., data = dataset)
 
 # Fitting Polynomial Regression to the dataset
 dataset$Level2 = dataset$Level^2
