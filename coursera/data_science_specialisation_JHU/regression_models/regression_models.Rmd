@@ -234,14 +234,87 @@ coefTable
 # easy way
 fit <- lm(y ~ x); summary(fit)$coefficients
 
+## Getting confidence intervals
+sumCoef <- summary(fit)$coefficients
+# confidence interval for the intercept
+sumCoef[1,1] + c(-1, 1) * qt(.975, df = fit$df) * sumCoef[1, 2] # -294.4870 -224.7649
+# confidence interval for the slope
+sumCoef[2,1] + c(-1, 1) * qt(.975, df = fit$df) * sumCoef[2, 2] # 3556.398 3885.651
+(sumCoef[2,1] + c(-1, 1) * qt(.975, df = fit$df) * sumCoef[2, 2])/10 # 355.6398 388.5651 # With 95% confidence, we estimate that a 0.1 carat increase in diamond size results in a 355.6 to 388.6 increase in price in (Singapore) dollars.
 
-
+## Prediction
+library(ggplot2)
+newx = data.frame(x = seq(min(x), max(x), length = 100))
+p1 = data.frame(predict(fit, newdata= newx,interval = ("confidence")))
+p2 = data.frame(predict(fit, newdata = newx,interval = ("prediction")))
+p1$interval = "confidence"
+p2$interval = "prediction"
+p1$x = newx$x
+p2$x = newx$x
+dat = rbind(p1, p2)
+names(dat)[1] = "y"
+g = ggplot(dat, aes(x = x, y = y))
+g = g + geom_ribbon(aes(ymin = lwr, ymax = upr, fill = interval), alpha = 0.2)
+g = g + geom_line()
+g = g + geom_point(data = data.frame(x = x, y=y), aes(x = x, y = y), size = 4)
+g
 ```
 
 Week 2 Quiz
 
 ```{r _w1_quiz}
-# Q1 - 
-
+# Q1 - 0.05296439
+x <- c(0.61, 0.93, 0.83, 0.35, 0.54, 0.16, 0.91, 0.62, 0.62)
+y <- c(0.67, 0.84, 0.6, 0.18, 0.85, 0.47, 1.1, 0.65, 0.36)
+n <- length(y)
+beta1 <- cor(y, x) * sd(y) / sd(x)
+beta0 <- mean(y) - beta1 * mean(x)
+yhat <- beta0 + beta1 * x
+residuals <- y - yhat
+sigma <- sqrt(sum(residuals^2)/(n-2))
+ssx <- sum((x - mean(x))^2)
+sebeta0 <- sqrt(1 / n + mean(x) ^ 2 / ssx) * sigma
+sebeta1 <- sigma / sqrt(ssx)
+tbeta0 <- beta0 / sebeta0
+tbeta1 <- beta1 / sebeta1
+pbeta0 <- 2 * pt(abs(tbeta0), df = n - 2, lower.tail = FALSE)
+pbeta1 <- 2 * pt(abs(tbeta1), df = n - 2, lower.tail = FALSE)
+pbeta1
+# Q2 - 0.2229981
+sigma <- sqrt(sum(residuals^2)/(n-2))
+sigma
+# Q3 - 18.99098
+data(mtcars)
+fit <- lm(mpg ~ wt, data = mtcars)
+predict(fit, data.frame(wt = mean(mtcars$wt)), interval="confidence")
+# Q4 - The estimated expected change in mpg per 1,000 lb increase in weight.
+# Q5 - 27.57355
+fit <- lm(mpg ~ wt, data=mtcars)
+predict(fit, data.frame(wt = 3), interval="prediction")
+# Q6 - -12.97262
+fit <- lm(mpg ~ I(wt/2), data=mtcars)
+coeff <- summary(fit)$coefficients
+coeff[1,1] + c(-1,1) * qt(0.975, df = fit$df) * coeff[1,2]
+coeff[2,1] + c(-1,1) * qt(0.975, df = fit$df) * coeff[2,2]
+# Q7 - It would get multiplied by 100.
+fit1 <- lm(mpg~wt, data=mtcars); summary(fit1)
+fit2 <- lm(mpg~I(wt/100), data=mtcars); summary(fit2)
+# Q8 - The new intercept would be b0 - c*b1
+c <- 5
+cf1 <- summary(fit)$coefficients; cf1
+fit4 <- lm(y ~ I(x+c)) # add some constant c
+cf2 <- summary(fit4)$coefficients; cf2
+b0 <- cf1[1,1]; b1 <- cf1[2,1]; c(b0,b1)
+b0 - c*b1
+# Q9 - 0.2471672
+fit1 <- lm(mpg ~ wt, data=mtcars); a1 <- anova(fit1)
+fit2 <- lm(mpg ~ 1, data=mtcars); a2 <- anova(fit2)
+a1[2,2]/a2[1,2]
+# Q10 - If an intercept is included, then they will sum to 0.
 ```
 
+Week 3. Multivariable regression analysis, Residuals & Diagnostics
+
+```{r w3}
+
+```
