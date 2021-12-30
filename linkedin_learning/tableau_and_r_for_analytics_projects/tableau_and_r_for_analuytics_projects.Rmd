@@ -1,0 +1,72 @@
+---
+title: "Tableau and R for Analytics Projects"
+author: "Evgeniia Golovina"
+date: "30/12/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Tableau and R for Analytics Projects
+
+```{launching_rserve}
+library(Rserve)
+Rserve(args="--no-save") # for more info --> http://www.rforge.net/Rserve/doc.html
+```
+
+```{outlier_detection}
+library(mvoutlier)
+
+# unzip the Ex_Files_Tableau_R_Analytics.zip folder to get the file
+ppct <- read.table("/Users/foffa/Desktop/R_projects/online_edu/linkedin_learning/tableau_and_r_for_analytics_projects/Ex_Files_Tableau_R_Analytics/Chapter04/ProfitData.csv", sep=",", header=T)
+outliers <- sign2(cbind(ppct$wfinal01, ppct$Profit))
+outliers # 0 is an outlier
+```
+
+```{clustering_models}
+# centroid-based clustering
+# unzip the Ex_Files_Tableau_R_Analytics.zip folder to get the file
+sales <- read.table("/Users/foffa/Desktop/R_projects/online_edu/linkedin_learning/tableau_and_r_for_analytics_projects/Ex_Files_Tableau_R_Analytics/Chapter05/ClusterData.csv", sep=",", header=T)
+result <- kmeans(sales, 5, iter.max=10)
+result
+```
+
+```{logistic_regression}
+# unzip the Ex_Files_Tableau_R_Analytics.zip folder to get the file
+train <- read.table("/Users/foffa/Desktop/R_projects/online_edu/linkedin_learning/tableau_and_r_for_analytics_projects/Ex_Files_Tableau_R_Analytics/Chapter06/TrainingData.csv", sep=",", header=T)
+model <- glm(LastYear ~ Year1 + Year2 + Year3 + Year4 + Year5, data=train, family=binomial)
+model
+test <- read.table("/Users/foffa/Desktop/R_projects/online_edu/linkedin_learning/tableau_and_r_for_analytics_projects/Ex_Files_Tableau_R_Analytics/Chapter06/TestData.csv", sep=",", header=T)
+test$pred <- predict(model, newdata=test, type="response")
+summary(model)
+```
+
+```{support_vector_machine}
+library(e1071)
+
+# unzip the Ex_Files_Tableau_R_Analytics.zip folder to get the file
+train <- read.table("/Users/foffa/Desktop/R_projects/online_edu/linkedin_learning/tableau_and_r_for_analytics_projects/Ex_Files_Tableau_R_Analytics/Chapter07/SVM_Training.csv", sep=",", header=T)
+model <- svm(formula = Purchased ~ Income + Age, data=train, type='C-classification', kernel='linear')
+model
+test <- read.table("/Users/foffa/Desktop/R_projects/online_edu/linkedin_learning/tableau_and_r_for_analytics_projects/Ex_Files_Tableau_R_Analytics/Chapter07/SVM_Test.csv", sep=",", header=T)
+predictions <- predict(model, newdata=test[-4])
+confmatrix <- table(test[,4], predictions)
+confmatrix
+```
+
+```{random_forests}
+library(randomForest)
+
+# unzip the Ex_Files_Tableau_R_Analytics.zip folder to get the file
+train <- read.table("/Users/foffa/Desktop/R_projects/online_edu/linkedin_learning/tableau_and_r_for_analytics_projects/Ex_Files_Tableau_R_Analytics/Chapter08/GlassTrain.csv", sep=",", header=T)
+model <- randomForest(as.factor(Class) ~ Attrib1 + Attrib2 + Attrib3 + Attrib4 + Attrib5 + Attrib6 +
+                        Attrib7 + Attrib8 + Attrib9, data=train)
+model
+test <- read.table("/Users/foffa/Desktop/R_projects/online_edu/linkedin_learning/tableau_and_r_for_analytics_projects/Ex_Files_Tableau_R_Analytics/Chapter08/GlassTest.csv", sep=",", header=T)
+predictions <- as.factor(predict(model, newdata=test[2:10]))
+predictions
+confmatrix <- table(test[,11], predictions)
+confmatrix
+```
